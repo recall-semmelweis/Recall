@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Recall</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0b;
+  --surface: #141416;
+  --surface-2: #1c1c1f;
+  --surface-3: #252528;
+  --border: #2a2a2e;
+  --text: #e8e6e3;
+  --text-2: #9a9a9e;
+  --text-3: #5a5a5e;
+  --accent: #c4a882;
+  --accent-dim: #8a7a64;
+  --green: #5a9a6a;
+  --green-bg: rgba(90,154,106,0.1);
+  --amber: #c4a24c;
+  --amber-bg: rgba(196,162,76,0.1);
+  --red: #b85c5c;
+  --red-bg: rgba(184,92,92,0.1);
+  --blue: #5c8ab8;
+  --blue-bg: rgba(92,138,184,0.1);
+  --radius: 10px;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Source Serif 4', Georgia, serif;
+  --transition: 180ms ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { 
+  height: 100%; 
+  background: var(--bg); 
+  color: var(--text); 
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ── Passphrase Gate ── */
+#gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+}
+#gate h1 {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2.5rem;
+}
+#gate input {
+  width: 280px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  text-align: center;
+  letter-spacing: 0.2em;
+  outline: none;
+  transition: border-color var(--transition);
+}
+#gate input:focus { border-color: var(--accent-dim); }
+#gate input::placeholder { color: var(--text-3); letter-spacing: 0.1em; }
+#gate .gate-error {
+  color: var(--red);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  margin-top: 1rem;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+#gate .gate-error.show { opacity: 1; }
+#gate .gate-hint {
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  margin-top: 2rem;
+  letter-spacing: 0.05em;
+}
+
+/* ── App Shell ── */
+#app { display: none; height: 100%; flex-direction: column; }
+#app.active { display: flex; }
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.header-title {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.header-actions { display: flex; gap: 8px; }
+.btn-icon {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 1.1rem;
+}
+.btn-icon:hover { background: var(--surface-2); color: var(--text); }
+
+/* Main content area */
+.main { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* ── Deck List View ── */
+#deck-list .deck-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+#deck-list .deck-card:hover { background: var(--surface-2); border-color: var(--accent-dim); }
+.deck-card-name {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.deck-card-stats {
+  display: flex;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+.stat { display: flex; align-items: center; gap: 5px; }
+.stat-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+}
+.stat-dot.new { background: var(--blue); }
+.stat-dot.due { background: var(--green); }
+.stat-dot.learning { background: var(--amber); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* ── Study View ── */
+#study-view { display: none; }
+#study-view.active { display: flex; flex-direction: column; height: 100%; }
+
+.study-progress {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.study-stat { padding: 4px 10px; border-radius: 6px; }
+.study-stat.new { background: var(--blue-bg); color: var(--blue); }
+.study-stat.learning { background: var(--amber-bg); color: var(--amber); }
+.study-stat.review { background: var(--green-bg); color: var(--green); }
+
+.card-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.card-content {
+  width: 100%;
+  max-width: 500px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.card-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-3);
+  margin-bottom: 20px;
+}
+.card-text {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.card-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+  margin: 28px 0;
+}
+.tap-hint {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-3);
+  margin-top: 24px;
+}
+
+.answer-buttons {
+  display: flex;
+  gap: 6px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.answer-btn {
+  flex: 1;
+  padding: 14px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+}
+.answer-btn .interval {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+.answer-btn:active { transform: scale(0.97); }
+.answer-btn.again { border-color: var(--red); color: var(--red); }
+.answer-btn.again:hover { background: var(--red-bg); }
+.answer-btn.hard { border-color: var(--amber); color: var(--amber); }
+.answer-btn.hard:hover { background: var(--amber-bg); }
+.answer-btn.good { border-color: var(--green); color: var(--green); }
+.answer-btn.good:hover { background: var(--green-bg); }
+.answer-btn.easy { border-color: var(--blue); color: var(--blue); }
+.answer-btn.easy:hover { background: var(--blue-bg); }
+
+.study-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+}
+.study-done h2 {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.study-done p {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px 20px;
+  animation: slideUp 200ms ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal h2 {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+}
+.modal label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-2);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.modal input, .modal textarea, .modal select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 16px;
+  transition: border-color var(--transition);
+  resize: vertical;
+}
+.modal input:focus, .modal textarea:focus, .modal select:focus { border-color: var(--accent-dim); }
+.modal textarea { min-height: 100px; line-height: 1.6; }
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+  border: 1px solid var(--border);
+}
+.btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary { background: var(--surface-2); color: var(--text-2); }
+.btn-secondary:hover { background: var(--surface-3); }
+.btn-danger { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+
+/* ── Browse cards ── */
+.browse-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.browse-card:hover { border-color: var(--accent-dim); }
+.browse-front {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.browse-back {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Settings link */
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+/* Safe area */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .header { padding-top: calc(16px + env(safe-area-inset-top)); }
+  .answer-buttons { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+}
+</style>
+</head>
+<body>
+
+<!-- Passphrase Gate -->
+<div id="gate">
+  <h1>Recall</h1>
+  <input type="password" id="passphrase" placeholder="passphrase" autocomplete="off" autofocus>
+  <div class="gate-error" id="gate-error">wrong passphrase</div>
+  <div class="gate-hint">press enter</div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Deck List -->
+  <div id="deck-list-view">
+    <div class="header">
+      <div class="header-title">Recall</div>
+      <div class="header-actions">
+        <button class="btn-icon" onclick="openAddCard()" title="Add card">+</button>
+        <button class="btn-icon" onclick="openAddDeck()" title="New deck">◇</button>
+        <button class="btn-icon" onclick="openSettings()" title="Settings">⚙</button>
+      </div>
+    </div>
+    <div class="main" id="deck-list"></div>
+  </div>
+
+  <!-- Study View -->
+  <div id="study-view">
+    <div class="header">
+      <button class="btn-icon" onclick="exitStudy()">←</button>
+      <div class="header-title" id="study-deck-name"></div>
+      <button class="btn-icon" onclick="openAddCard()" title="Add card">+</button>
+    </div>
+    <div class="study-progress" id="study-progress"></div>
+    <div class="card-area" id="card-area" onclick="revealAnswer()">
+      <div class="card-content" id="card-content"></div>
+    </div>
+    <div class="answer-buttons" id="answer-buttons" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Card Modal -->
+<div class="modal-overlay" id="card-modal">
+  <div class="modal">
+    <h2 id="card-modal-title">Add Card</h2>
+    <label>Deck</label>
+    <select id="card-deck-select"></select>
+    <label>Front</label>
+    <textarea id="card-front" placeholder="Question or prompt..."></textarea>
+    <label>Back</label>
+    <textarea id="card-back" placeholder="Answer..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('card-modal')">Cancel</button>
+      <button class="btn btn-danger" id="card-delete-btn" onclick="deleteCard()" style="display:none;">Delete</button>
+      <button class="btn btn-primary" onclick="saveCard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Deck Modal -->
+<div class="modal-overlay" id="deck-modal">
+  <div class="modal">
+    <h2>New Deck</h2>
+    <label>Name</label>
+    <input type="text" id="deck-name" placeholder="e.g. Pharmacology">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('deck-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeck()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Browse Cards Modal -->
+<div class="modal-overlay" id="browse-modal">
+  <div class="modal">
+    <h2 id="browse-title">Cards</h2>
+    <div id="browse-list"></div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal('browse-modal')">Close</button>
+      <button class="btn btn-danger" id="browse-delete-deck" onclick="deleteDeck()">Delete Deck</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div class="settings-row">
+      <span>New cards/day</span>
+      <input type="number" id="setting-new-per-day" value="20" style="width:70px;text-align:center;margin:0;">
+    </div>
+    <div class="settings-row">
+      <span>Change passphrase</span>
+      <input type="password" id="setting-new-pass" placeholder="new" style="width:140px;margin:0;">
+    </div>
+    <label style="margin-top:16px;">Export / Import</label>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal('settings-modal')">Close</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA & STATE
+// ══════════════════════════════════════
+
+const PASS_HASH_KEY = 'recall_pass_hash';
+const DATA_KEY = 'recall_data';
+const SETTINGS_KEY = 'recall_settings';
+
+let db = { decks: [], cards: [] };
+let settings = { newPerDay: 20 };
+let currentDeckId = null;
+let studyQueue = [];
+let currentCardIndex = 0;
+let answerRevealed = false;
+let editingCardId = null;
+
+// Simple hash for passphrase (not crypto-grade, just a gate)
+async function hashPass(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function loadData() {
+  try { db = JSON.parse(localStorage.getItem(DATA_KEY)) || { decks: [], cards: [] }; } catch(e) { db = { decks: [], cards: [] }; }
+  try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { newPerDay: 20 }; } catch(e) { settings = { newPerDay: 20 }; }
+}
+function saveData() { localStorage.setItem(DATA_KEY, JSON.stringify(db)); }
+function saveSettingsData() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+// ══════════════════════════════════════
+//  PASSPHRASE GATE
+// ══════════════════════════════════════
+
+const gateEl = document.getElementById('gate');
+const appEl = document.getElementById('app');
+const passInput = document.getElementById('passphrase');
+const gateError = document.getElementById('gate-error');
+
+passInput.addEventListener('keydown', async (e) => {
+  if (e.key !== 'Enter') return;
+  const val = passInput.value.trim();
+  if (!val) return;
+  const hash = await hashPass(val);
+  const stored = localStorage.getItem(PASS_HASH_KEY);
+
+  if (!stored) {
+    // First time — set passphrase
+    localStorage.setItem(PASS_HASH_KEY, hash);
+    unlock();
+  } else if (hash === stored) {
+    unlock();
+  } else {
+    gateError.classList.add('show');
+    passInput.value = '';
+    setTimeout(() => gateError.classList.remove('show'), 2000);
+  }
+});
+
+function unlock() {
+  gateEl.style.display = 'none';
+  appEl.classList.add('active');
+  loadData();
+  renderDecks();
+}
+
+// ══════════════════════════════════════
+//  SM-2 ALGORITHM
+// ══════════════════════════════════════
+
+function createCard(deckId, front, back) {
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    deckId,
+    front,
+    back,
+    interval: 0,      // days
+    repetition: 0,
+    easeFactor: 2.5,
+    due: Date.now(),
+    lapses: 0,
+    status: 'new'     // new | learning | review
+  };
+}
+
+function sm2(card, quality) {
+  // quality: 0=again, 1=hard, 2=good, 3=easy
+  const q = [0, 2, 3, 5][quality]; // map to SM-2 scale
+  let { interval, repetition, easeFactor } = card;
+
+  if (q < 3) {
+    // Failed — reset
+    card.lapses++;
+    card.status = 'learning';
+    card.interval = 0;
+    card.repetition = 0;
+    card.due = Date.now() + 60000; // 1 min
+  } else {
+    if (repetition === 0) {
+      interval = 1;
+    } else if (repetition === 1) {
+      interval = quality === 3 ? 4 : 3; // easy gets 4 days
+    } else {
+      interval = Math.round(interval * easeFactor);
+      if (quality === 1) interval = Math.max(1, Math.round(interval * 0.8)); // hard
+      if (quality === 3) interval = Math.round(interval * 1.3); // easy bonus
+    }
+    easeFactor = easeFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    if (easeFactor < 1.3) easeFactor = 1.3;
+
+    card.interval = interval;
+    card.repetition = repetition + 1;
+    card.easeFactor = easeFactor;
+    card.status = 'review';
+    card.due = Date.now() + interval * 86400000;
+  }
+  return card;
+}
+
+function formatInterval(card, quality) {
+  const q = [0, 2, 3, 5][quality];
+  if (q < 3) return '1m';
+  let { interval, repetition, easeFactor } = card;
+  if (repetition === 0) return '1d';
+  if (repetition === 1) return quality === 3 ? '4d' : '3d';
+  let iv = Math.round(interval * easeFactor);
+  if (quality === 1) iv = Math.max(1, Math.round(iv * 0.8));
+  if (quality === 3) iv = Math.round(iv * 1.3);
+  if (iv < 30) return iv + 'd';
+  if (iv < 365) return Math.round(iv / 30) + 'mo';
+  return (iv / 365).toFixed(1) + 'y';
+}
+
+// ══════════════════════════════════════
+//  DECK LIST
+// ══════════════════════════════════════
+
+function renderDecks() {
+  const el = document.getElementById('deck-list');
+  if (db.decks.length === 0) {
+    el.innerHTML = '<div class="empty-state">No decks yet.<br>Tap ◇ to create one.</div>';
+    return;
+  }
+  const now = Date.now();
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  
+  el.innerHTML = db.decks.map(deck => {
+    const cards = db.cards.filter(c => c.deckId === deck.id);
+    const newCount = cards.filter(c => c.status === 'new').length;
+    const dueCount = cards.filter(c => c.status === 'review' && c.due <= now).length;
+    const learningCount = cards.filter(c => c.status === 'learning' && c.due <= now).length;
+    return `
+      <div class="deck-card" onclick="startStudy('${deck.id}')" oncontextmenu="event.preventDefault();browseDeck('${deck.id}')">
+        <div class="deck-card-name">${esc(deck.name)}</div>
+        <div class="deck-card-stats">
+          <div class="stat"><span class="stat-dot new"></span>${newCount} new</div>
+          <div class="stat"><span class="stat-dot learning"></span>${learningCount} learning</div>
+          <div class="stat"><span class="stat-dot due"></span>${dueCount} due</div>
+          <div class="stat" style="color:var(--text-3)">${cards.length} total</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  STUDY SESSION
+// ══════════════════════════════════════
+
+function startStudy(deckId) {
+  currentDeckId = deckId;
+  const deck = db.decks.find(d => d.id === deckId);
+  if (!deck) return;
+  
+  document.getElementById('study-deck-name').textContent = deck.name;
+  document.getElementById('deck-list-view').style.display = 'none';
+  document.getElementById('study-view').classList.add('active');
+  
+  buildQueue();
+  showNextCard();
+}
+
+function buildQueue() {
+  const now = Date.now();
+  const cards = db.cards.filter(c => c.deckId === currentDeckId);
+  
+  const learning = cards.filter(c => c.status === 'learning' && c.due <= now);
+  const due = cards.filter(c => c.status === 'review' && c.due <= now);
+  const newCards = cards.filter(c => c.status === 'new').slice(0, settings.newPerDay);
+  
+  // Interleave: learning first, then new+review shuffled
+  const reviewPool = [...due, ...newCards];
+  shuffle(reviewPool);
+  studyQueue = [...learning, ...reviewPool];
+  currentCardIndex = 0;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function showNextCard() {
+  updateStudyProgress();
+  const area = document.getElementById('card-content');
+  const btns = document.getElementById('answer-buttons');
+  
+  if (currentCardIndex >= studyQueue.length) {
+    // Check for newly due learning cards
+    const now = Date.now();
+    const learning = db.cards.filter(c => c.deckId === currentDeckId && c.status === 'learning' && c.due <= now);
+    if (learning.length > 0) {
+      studyQueue = learning;
+      currentCardIndex = 0;
+    } else {
+      area.innerHTML = `<div class="study-done"><h2>Done for now</h2><p>All cards reviewed</p></div>`;
+      btns.style.display = 'none';
+      document.getElementById('card-area').onclick = null;
+      return;
+    }
+  }
+  
+  const card = studyQueue[currentCardIndex];
+  answerRevealed = false;
+  btns.style.display = 'none';
+  document.getElementById('card-area').onclick = revealAnswer;
+  
+  area.innerHTML = `
+    <div class="card-label">${card.status === 'new' ? 'new' : card.status}</div>
+    <div class="card-text">${esc(card.front)}</div>
+    <div class="tap-hint">tap to reveal</div>`;
+}
+
+function revealAnswer() {
+  if (answerRevealed || currentCardIndex >= studyQueue.length) return;
+  answerRevealed = true;
+  
+  const card = studyQueue[currentCardIndex];
+  const area = document.getElementById('card-content');
+  const btns = document.getElementById('answer-buttons');
+  
+  area.innerHTML = `
+    <div class="card-label">front</div>
+    <div class="card-text">${esc(card.front)}</div>
+    <div class="card-divider"></div>
+    <div class="card-label">back</div>
+    <div class="card-text">${esc(card.back)}</div>`;
+  
+  btns.style.display = 'flex';
+  btns.innerHTML = [
+    { q: 0, label: 'Again', cls: 'again' },
+    { q: 1, label: 'Hard', cls: 'hard' },
+    { q: 2, label: 'Good', cls: 'good' },
+    { q: 3, label: 'Easy', cls: 'easy' }
+  ].map(b => `
+    <button class="answer-btn ${b.cls}" onclick="answerCard(${b.q})">
+      ${b.label}
+      <span class="interval">${formatInterval(card, b.q)}</span>
+    </button>`).join('');
+}
+
+function answerCard(quality) {
+  const card = studyQueue[currentCardIndex];
+  sm2(card, quality);
+  saveData();
+  
+  // If failed, re-add to end of queue
+  if (quality === 0) {
+    studyQueue.push(card);
+  }
+  
+  currentCardIndex++;
+  showNextCard();
+}
+
+function updateStudyProgress() {
+  const cards = db.cards.filter(c => c.deckId === currentDeckId);
+  const now = Date.now();
+  const newC = cards.filter(c => c.status === 'new').length;
+  const learn = cards.filter(c => c.status === 'learning').length;
+  const rev = cards.filter(c => c.status === 'review' && c.due <= now).length;
+  
+  document.getElementById('study-progress').innerHTML = `
+    <span class="study-stat new">${newC} new</span>
+    <span class="study-stat learning">${learn} learning</span>
+    <span class="study-stat review">${rev} review</span>`;
+}
+
+function exitStudy() {
+  document.getElementById('study-view').classList.remove('active');
+  document.getElementById('deck-list-view').style.display = '';
+  currentDeckId = null;
+  renderDecks();
+}
+
+// ══════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', (e) => {
+    if (e.target === el) el.classList.remove('active');
+  });
+});
+
+// Add Card
+function openAddCard() {
+  editingCardId = null;
+  document.getElementById('card-modal-title').textContent = 'Add Card';
+  document.getElementById('card-delete-btn').style.display = 'none';
+  document.getElementById('card-front').value = '';
+  document.getElementById('card-back').value = '';
+  populateDeckSelect();
+  openModal('card-modal');
+  setTimeout(() => document.getElementById('card-front').focus(), 100);
+}
+
+function openEditCard(cardId) {
+  const card = db.cards.find(c => c.id === cardId);
+  if (!card) return;
+  editingCardId = cardId;
+  document.getElementById('card-modal-title').textContent = 'Edit Card';
+  document.getElementById('card-delete-btn').style.display = '';
+  document.getElementById('card-front').value = card.front;
+  document.getElementById('card-back').value = card.back;
+  populateDeckSelect(card.deckId);
+  openModal('card-modal');
+}
+
+function populateDeckSelect(selectedId) {
+  const sel = document.getElementById('card-deck-select');
+  sel.innerHTML = db.decks.map(d => 
+    `<option value="${d.id}" ${d.id === (selectedId || currentDeckId) ? 'selected' : ''}>${esc(d.name)}</option>`
+  ).join('');
+}
+
+function saveCard() {
+  const front = document.getElementById('card-front').value.trim();
+  const back = document.getElementById('card-back').value.trim();
+  const deckId = document.getElementById('card-deck-select').value;
+  if (!front || !back) return;
+  
+  if (editingCardId) {
+    const card = db.cards.find(c => c.id === editingCardId);
+    if (card) { card.front = front; card.back = back; card.deckId = deckId; }
+  } else {
+    db.cards.push(createCard(deckId, front, back));
+  }
+  saveData();
+  closeModal('card-modal');
+  if (currentDeckId) { buildQueue(); showNextCard(); }
+  renderDecks();
+}
+
+function deleteCard() {
+  if (!editingCardId) return;
+  db.cards = db.cards.filter(c => c.id !== editingCardId);
+  saveData();
+  closeModal('card-modal');
+  if (currentDeckId) { buildQueue(); showNextCard(); }
+  renderDecks();
+}
+
+// Add Deck
+function openAddDeck() {
+  document.getElementById('deck-name').value = '';
+  openModal('deck-modal');
+  setTimeout(() => document.getElementById('deck-name').focus(), 100);
+}
+
+function saveDeck() {
+  const name = document.getElementById('deck-name').value.trim();
+  if (!name) return;
+  db.decks.push({ id: Date.now().toString(36), name });
+  saveData();
+  closeModal('deck-modal');
+  renderDecks();
+}
+
+// Browse Deck
+function browseDeck(deckId) {
+  const deck = db.decks.find(d => d.id === deckId);
+  if (!deck) return;
+  document.getElementById('browse-title').textContent = deck.name;
+  document.getElementById('browse-delete-deck').onclick = () => deleteDeck(deckId);
+  
+  const cards = db.cards.filter(c => c.deckId === deckId);
+  document.getElementById('browse-list').innerHTML = cards.length === 0 
+    ? '<div style="color:var(--text-3);font-family:var(--mono);font-size:0.75rem;padding:20px 0;text-align:center;">No cards yet</div>'
+    : cards.map(c => `
+      <div class="browse-card" onclick="closeModal('browse-modal');openEditCard('${c.id}')">
+        <div class="browse-front">${esc(c.front)}</div>
+        <div class="browse-back">${esc(c.back)}</div>
+      </div>`).join('');
+  
+  openModal('browse-modal');
+}
+
+function deleteDeck(deckId) {
+  if (!confirm('Delete this deck and all its cards?')) return;
+  db.decks = db.decks.filter(d => d.id !== deckId);
+  db.cards = db.cards.filter(c => c.deckId !== deckId);
+  saveData();
+  closeModal('browse-modal');
+  renderDecks();
+}
+
+// Settings
+function openSettings() {
+  document.getElementById('setting-new-per-day').value = settings.newPerDay;
+  document.getElementById('setting-new-pass').value = '';
+  openModal('settings-modal');
+}
+
+async function saveSettings() {
+  settings.newPerDay = parseInt(document.getElementById('setting-new-per-day').value) || 20;
+  saveSettingsData();
+  
+  const newPass = document.getElementById('setting-new-pass').value.trim();
+  if (newPass) {
+    localStorage.setItem(PASS_HASH_KEY, await hashPass(newPass));
+  }
+  closeModal('settings-modal');
+}
+
+// Export / Import
+function exportData() {
+  const blob = new Blob([JSON.stringify({ db, settings }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'recall-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.db) { db = data.db; saveData(); }
+      if (data.settings) { settings = data.settings; saveSettingsData(); }
+      renderDecks();
+      closeModal('settings-modal');
+    } catch(err) { alert('Invalid file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// Utility
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// Enter key in deck name
+document.getElementById('deck-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveDeck(); });
+</script>
+
+</body>
+</html>

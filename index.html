@@ -197,10 +197,10 @@ input,textarea,select{font-family:inherit}
     <div id="css" style="display:none">
       <label>Status</label>
       <select id="csst"><option value="new">New</option><option value="learning">Learning</option><option value="review">Review</option><option value="suspended">Suspended</option></select>
-      <button class="bt bt-s" onclick="resetCard()" style="margin-top:2px;flex:none;font-size:.62rem;color:var(--t3)">Reset progress</button>
     </div>
     <div class="ma">
       <button class="bt bt-s" onclick="clm(document.getElementById('cm'))">Cancel</button>
+      <button class="bt bt-s" id="crb" onclick="resetCard()" style="display:none">Reset</button>
       <button class="bt bt-d" id="cdb" onclick="delCard()" style="display:none">Delete</button>
       <button class="bt bt-p" onclick="saveC()">Save</button>
     </div>
@@ -387,10 +387,10 @@ function updProg(){const cs=D.cards.filter(c=>c.deckId===curDk&&c.status!=='susp
 function exitStudy(){$('sv').classList.add('vh');$('dv').classList.remove('vh');curDk=null;renderDL()}
 
 // CARD CRUD
-function addCard(){editCid=null;$('cmt').textContent='Add Card';$('cdb').style.display='none';$('css').style.display='none';$('cf').value='';$('cbk').value='';popDkSel();opm($('cm'));setTimeout(()=>$('cf').focus(),120)}
+function addCard(){editCid=null;$('cmt').textContent='Add Card';$('cdb').style.display='none';$('crb').style.display='none';$('css').style.display='none';$('cf').value='';$('cbk').value='';popDkSel();opm($('cm'));setTimeout(()=>$('cf').focus(),120)}
 function addCardDeck(){addCard();if(curDk)$('cds').value=curDk}
 function addCardId(id){addCard();$('cds').value=id}
-function editCard(id){const c=D.cards.find(x=>x.id===id);if(!c)return;editCid=id;$('cmt').textContent='Edit Card';$('cdb').style.display='';$('css').style.display='';$('cf').value=c.front;$('cbk').value=c.back;$('csst').value=c.status||'new';popDkSel(c.deckId);opm($('cm'))}
+function editCard(id){const c=D.cards.find(x=>x.id===id);if(!c)return;editCid=id;$('cmt').textContent='Edit Card';$('cdb').style.display='';$('crb').style.display='';$('css').style.display='';$('cf').value=c.front;$('cbk').value=c.back;$('csst').value=c.status||'new';popDkSel(c.deckId);opm($('cm'))}
 function popDkSel(sel){$('cds').innerHTML=D.decks.map(d=>`<option value="${d.id}" ${d.id===(sel||curDk||'')?'selected':''}>${esc(d.name)}</option>`).join('')}
 async function saveC(){const f=$('cf').value.trim(),b=$('cbk').value.trim(),dk=$('cds').value;if(!f||!b){toast('Fill in both sides');return}if(!dk){toast('Select a deck');return}if(editCid){const c=D.cards.find(x=>x.id===editCid);if(c){c.front=f;c.back=b;c.deckId=dk;c.status=$('csst').value;await fbSC(c);toast('Updated')}}else{await fbSC(mkCard(dk,f,b));toast('Added')}clm($('cm'));if(curDk){buildQ();showCard()}}
 function delCard(){if(!editCid)return;confirm2('Delete this card?','Delete',async()=>{await fbDC(editCid);clm($('cm'));toast('Deleted');if(curDk){buildQ();showCard()}})}

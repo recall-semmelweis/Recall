@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recall</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -68,7 +68,8 @@ input,textarea,select{font-family:inherit}
 .study-stat.learning{background:var(--amber-bg);color:var(--amber)}
 .study-stat.review{background:var(--green-bg);color:var(--green)}
 
-.card-area{flex:1;display:flex;flex-direction:column;align-items:center;padding:24px;cursor:pointer;user-select:none;-webkit-user-select:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.card-area{flex:1;display:flex;flex-direction:column;align-items:center;padding:0;cursor:pointer;user-select:none;-webkit-user-select:none;overflow-y:scroll;-webkit-overflow-scrolling:touch;position:relative}
+.card-area-inner{width:100%;max-width:500px;padding:24px;margin:0 auto}
 .card-content{width:100%;max-width:500px;min-height:120px;display:flex;flex-direction:column;padding-bottom:20px}
 .card-label{font-family:var(--mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:var(--text-3);margin-bottom:12px;text-align:center}
 .card-text{font-family:var(--serif);font-size:1.1rem;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word;text-align:left}
@@ -136,10 +137,6 @@ input,textarea,select{font-family:inherit}
 .settings-row input[type="number"]{width:70px;text-align:center;margin:0;padding:8px;font-size:.8rem}
 .settings-hint{font-family:var(--mono);font-size:.58rem;color:var(--text-3);margin-top:4px}
 
-.due-edit-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.due-edit-row input{flex:1;margin:0}
-.due-edit-row .btn{flex:0;padding:8px 12px;white-space:nowrap}
-
 .view-hidden{display:none !important}
 @supports(padding-top:env(safe-area-inset-top)){.header{padding-top:calc(16px + env(safe-area-inset-top))}.answer-buttons{padding-bottom:calc(14px + env(safe-area-inset-bottom))}}
 .main::-webkit-scrollbar{width:4px}.main::-webkit-scrollbar-track{background:transparent}.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
@@ -168,7 +165,7 @@ input,textarea,select{font-family:inherit}
         <div class="sync-dot" id="sync-dot" title="Sync status"></div>
         <button class="btn-icon" onclick="openAddCard()" title="Add card">+</button>
         <button class="btn-icon" onclick="openAddDeck()" title="New deck">◇</button>
-        <button class="btn-icon" onclick="openSettings()" title="Settings">⚙</button>
+        <button class="btn-icon" onclick="openSettings()" title="Settings" style="font-size:.85rem;color:var(--text-3)">⚙</button>
         <button class="btn-icon" onclick="handleSignOut()" title="Sign out">⏻</button>
       </div>
     </div>
@@ -184,8 +181,10 @@ input,textarea,select{font-family:inherit}
       </div>
     </div>
     <div class="study-progress" id="study-progress"></div>
-    <div class="card-area" id="card-area" onclick="revealAnswer()">
-      <div class="card-content" id="card-content"></div>
+    <div class="card-area" id="card-area">
+      <div class="card-area-inner">
+        <div class="card-content" id="card-content"></div>
+      </div>
     </div>
     <div class="answer-buttons" id="answer-buttons" style="display:none;"></div>
   </div>
@@ -198,14 +197,11 @@ input,textarea,select{font-family:inherit}
     <select id="card-deck-select"></select>
     <label>Front</label>
     <textarea id="card-front" placeholder="Question or prompt..."></textarea>
-    <label>Back (supports • for bullets, **bold**)</label>
-    <textarea id="card-back" placeholder="Answer...&#10;• bullet point&#10;• another point"></textarea>
+    <label>Back</label>
+    <textarea id="card-back" placeholder="Answer...&#10;- bullet point&#10;- another point"></textarea>
     <div id="card-schedule-section" style="display:none;">
       <label>Due in (days)</label>
-      <div class="due-edit-row">
-        <input type="number" id="card-due-days" min="0" value="0" placeholder="0">
-        <button class="btn btn-secondary" onclick="setCardDueNow()">Now</button>
-      </div>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" id="card-due-days" value="0" placeholder="0" style="margin-bottom:14px">
       <label>Status</label>
       <select id="card-status-select">
         <option value="new">New</option>
@@ -249,9 +245,16 @@ input,textarea,select{font-family:inherit}
     <h2>Settings</h2>
     <div class="settings-section">
       <h3>Study</h3>
-      <div class="settings-row"><span>New cards per day</span><input type="number" id="s-new-per-day" min="1" max="200" value="20"></div>
-      <div class="settings-row"><span>Default interval (days)</span><input type="number" id="s-default-interval" min="1" max="365" value="1"></div>
-      <div class="settings-hint">Default interval is used for the first 'Good' answer on a new card.</div>
+      <div class="settings-row"><span>New cards per day</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-new-per-day" value="20" style="width:60px;text-align:center;margin:0;padding:8px"></div>
+    </div>
+    <div class="settings-section">
+      <h3>Intervals (days)</h3>
+      <div class="settings-hint" style="margin-bottom:8px">How many days until you see a card again after each answer (for first review of a new card).</div>
+      <div class="settings-row"><span>Again</span><span style="color:var(--text-3)">always 0</span></div>
+      <div class="settings-row"><span>Hard</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-interval-hard" value="1" style="width:60px;text-align:center;margin:0;padding:8px"></div>
+      <div class="settings-row"><span>Good</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-interval-good" value="1" style="width:60px;text-align:center;margin:0;padding:8px"></div>
+      <div class="settings-row"><span>Easy</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-interval-easy" value="4" style="width:60px;text-align:center;margin:0;padding:8px"></div>
+      <div class="settings-hint">After the first review, intervals grow automatically based on SM-2 spacing.</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal(document.getElementById('settings-modal'))">Cancel</button>
@@ -288,7 +291,7 @@ firebase.initializeApp({
 const auth=firebase.auth(),firestore=firebase.firestore();
 firestore.enablePersistence({synchronizeTabs:true}).catch(()=>{});
 
-let db={decks:[],cards:[]},settings={newPerDay:20,defaultInterval:1};
+let db={decks:[],cards:[]},settings={newPerDay:20,intervalHard:1,intervalGood:1,intervalEasy:4};
 let currentUser=null,currentDeckId=null,studyQueue=[],currentCardIndex=0,answerRevealed=false;
 let editingCardId=null,editingDeckId=null,confirmCallback=null,unsubDecks=null,unsubCards=null,unsubSettings=null;
 let authMode='signin';
@@ -338,10 +341,18 @@ function createCard(deckId,front,back){return{id:Date.now().toString(36)+Math.ra
 
 function sm2(card,quality){
   const q=[0,2,3,5][quality];let{interval,repetition,easeFactor}=card;
-  if(q<3){card.lapses++;card.status='learning';card.interval=0;card.repetition=0;card.due=Date.now()+60000}
+  if(q<3){card.lapses++;card.status='learning';card.interval=0;card.repetition=0;card.due=Date.now()}
   else{
-    if(repetition===0)interval=settings.defaultInterval||1;
-    else if(repetition===1)interval=quality===3?4:3;
+    if(repetition===0){
+      if(quality===1)interval=settings.intervalHard||1;
+      else if(quality===3)interval=settings.intervalEasy||4;
+      else interval=settings.intervalGood||1;
+    }
+    else if(repetition===1){
+      if(quality===1)interval=Math.max(1,Math.round((settings.intervalGood||1)*1.5));
+      else if(quality===3)interval=Math.max(1,Math.round((settings.intervalGood||1)*3));
+      else interval=Math.max(1,Math.round((settings.intervalGood||1)*2));
+    }
     else{interval=Math.round(interval*easeFactor);if(quality===1)interval=Math.max(1,Math.round(interval*.8));if(quality===3)interval=Math.round(interval*1.3)}
     easeFactor+=.1-(5-q)*(.08+(5-q)*.02);if(easeFactor<1.3)easeFactor=1.3;
     card.interval=interval;card.repetition=repetition+1;card.easeFactor=easeFactor;card.status='review';card.due=Date.now()+interval*86400000;
@@ -350,9 +361,17 @@ function sm2(card,quality){
 }
 
 function formatInterval(card,quality){
-  const q=[0,2,3,5][quality];if(q<3)return'1m';let{interval,repetition,easeFactor}=card;
-  if(repetition===0)return(settings.defaultInterval||1)+'d';
-  if(repetition===1)return quality===3?'4d':'3d';
+  const q=[0,2,3,5][quality];if(q<3)return'now';let{interval,repetition,easeFactor}=card;
+  if(repetition===0){
+    if(quality===1)return(settings.intervalHard||1)+'d';
+    if(quality===3)return(settings.intervalEasy||4)+'d';
+    return(settings.intervalGood||1)+'d';
+  }
+  if(repetition===1){
+    if(quality===1)return Math.max(1,Math.round((settings.intervalGood||1)*1.5))+'d';
+    if(quality===3)return Math.max(1,Math.round((settings.intervalGood||1)*3))+'d';
+    return Math.max(1,Math.round((settings.intervalGood||1)*2))+'d';
+  }
   let iv=Math.round(interval*easeFactor);if(quality===1)iv=Math.max(1,Math.round(iv*.8));if(quality===3)iv=Math.round(iv*1.3);
   if(iv<30)return iv+'d';if(iv<365)return Math.round(iv/30)+'mo';return(iv/365).toFixed(1)+'y';
 }
@@ -362,12 +381,9 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 function renderCardText(raw){
   let t=esc(raw);
   t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-  t=t.replace(/^• (.+)$/gm,'<li>$1</li>');
   t=t.replace(/^- (.+)$/gm,'<li>$1</li>');
-  t=t.replace(/(<li>.*<\/li>)/s,m=>'<ul>'+m+'</ul>');
-  // fix multiple ul runs
+  t=t.replace(/(<li>[\s\S]*?<\/li>)/g,m=>{if(!m.startsWith('<ul>'))return'<ul>'+m+'</ul>';return m});
   t=t.replace(/<\/ul>\s*<ul>/g,'');
-  t=t.replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>');
   return t;
 }
 
@@ -429,10 +445,9 @@ function showNextCard(){
   if(currentCardIndex>=studyQueue.length){
     const now=Date.now(),learning=db.cards.filter(c=>c.deckId===currentDeckId&&c.status==='learning'&&c.due<=now);
     if(learning.length>0){studyQueue=learning;currentCardIndex=0}
-    else{area.innerHTML='<div class="study-done"><h2>Done for now</h2><p>All cards reviewed</p></div>';btns.style.display='none';document.getElementById('card-area').onclick=null;return}
+    else{area.innerHTML='<div class="study-done"><h2>Done for now</h2><p>All cards reviewed</p></div>';btns.style.display='none';return}
   }
   const card=studyQueue[currentCardIndex];answerRevealed=false;btns.style.display='none';
-  document.getElementById('card-area').onclick=revealAnswer;
   document.getElementById('card-area').scrollTop=0;
   area.innerHTML=`<div class="card-label">${card.status==='new'?'new':card.status}</div>
     <div class="card-text question">${renderCardText(card.front)}</div>
@@ -452,6 +467,17 @@ function revealAnswer(){
   btns.innerHTML=[{q:0,label:'Again',cls:'again'},{q:1,label:'Hard',cls:'hard'},{q:2,label:'Good',cls:'good'},{q:3,label:'Easy',cls:'easy'}]
     .map(b=>`<button class="answer-btn ${b.cls}" onclick="answerCard(${b.q})">${b.label}<span class="interval">${formatInterval(card,b.q)}</span></button>`).join('');
 }
+
+// Touch-aware tap detection for card area — allows scrolling without triggering reveal
+(function(){
+  const ca=document.getElementById('card-area');
+  let startY=0,moved=false;
+  ca.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;moved=false},{passive:true});
+  ca.addEventListener('touchmove',e=>{if(Math.abs(e.touches[0].clientY-startY)>10)moved=true},{passive:true});
+  ca.addEventListener('touchend',e=>{if(!moved)revealAnswer()});
+  ca.addEventListener('click',e=>{if(!('ontouchstart' in window))revealAnswer()});
+  ca.onclick=null;
+})();
 
 function answerCard(quality){const card=studyQueue[currentCardIndex];sm2(card,quality);fbSaveCard(card);if(quality===0)studyQueue.push(card);currentCardIndex++;showNextCard()}
 
@@ -555,12 +581,16 @@ function quickDeleteCard(cardId,deckId){showConfirm('Delete this card?','Delete'
 // ── SETTINGS ──
 function openSettings(){
   document.getElementById('s-new-per-day').value=settings.newPerDay||20;
-  document.getElementById('s-default-interval').value=settings.defaultInterval||1;
+  document.getElementById('s-interval-hard').value=settings.intervalHard||1;
+  document.getElementById('s-interval-good').value=settings.intervalGood||1;
+  document.getElementById('s-interval-easy').value=settings.intervalEasy||4;
   openModal(document.getElementById('settings-modal'));
 }
 async function saveSettings(){
   settings.newPerDay=parseInt(document.getElementById('s-new-per-day').value)||20;
-  settings.defaultInterval=parseInt(document.getElementById('s-default-interval').value)||1;
+  settings.intervalHard=parseInt(document.getElementById('s-interval-hard').value)||1;
+  settings.intervalGood=parseInt(document.getElementById('s-interval-good').value)||1;
+  settings.intervalEasy=parseInt(document.getElementById('s-interval-easy').value)||4;
   await fbSaveSettings();toast('Settings saved');closeModal(document.getElementById('settings-modal'));
 }
 

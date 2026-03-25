@@ -9,598 +9,420 @@
 <meta name="theme-color" content="#0a0a0b">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0a0b;--surface:#141416;--surface-2:#1c1c1f;--surface-3:#252528;--border:#2a2a2e;--text:#e8e6e3;--text-2:#9a9a9e;--text-3:#5a5a5e;--accent:#c4a882;--accent-dim:#8a7a64;--green:#5a9a6a;--green-bg:rgba(90,154,106,.12);--amber:#c4a24c;--amber-bg:rgba(196,162,76,.12);--red:#b85c5c;--red-bg:rgba(184,92,92,.12);--blue:#5c8ab8;--blue-bg:rgba(92,138,184,.12);--radius:10px;--mono:'JetBrains Mono',monospace;--serif:'Source Serif 4',Georgia,serif;--transition:180ms ease}
+:root{--bg:#0a0a0b;--s1:#131315;--s2:#1a1a1d;--s3:#222225;--bdr:#2a2a2e;--t1:#e8e6e3;--t2:#8e8e92;--t3:#55555a;--ac:#c4a882;--acd:#8a7a64;--grn:#5a9a6a;--grn2:rgba(90,154,106,.12);--amb:#c4a24c;--amb2:rgba(196,162,76,.12);--red:#b85c5c;--red2:rgba(184,92,92,.12);--blu:#5c8ab8;--blu2:rgba(92,138,184,.12);--r:10px;--m:'JetBrains Mono',monospace;--s:'Source Serif 4',Georgia,serif;--tr:160ms ease}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden}
+html{height:100%}
+body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--s);-webkit-font-smoothing:antialiased;overflow:hidden;display:flex;flex-direction:column}
 button{font-family:inherit;border:none;cursor:pointer}
 input,textarea,select{font-family:inherit}
 
-#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:2rem}
-#auth-screen h1{font-family:var(--mono);font-size:1.1rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:2.5rem}
-.auth-form{width:100%;max-width:300px}
-.auth-form input{width:100%;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:.85rem;outline:none;margin-bottom:10px;transition:border-color var(--transition)}
-.auth-form input:focus{border-color:var(--accent-dim)}
-.auth-form input::placeholder{color:var(--text-3)}
-.auth-btn{width:100%;padding:13px;background:var(--accent);color:var(--bg);font-family:var(--mono);font-size:.8rem;font-weight:600;letter-spacing:.06em;border-radius:var(--radius);margin-top:4px;transition:opacity var(--transition)}
-.auth-btn:hover{opacity:.9}
-.auth-toggle{margin-top:20px;font-family:var(--mono);font-size:.7rem;color:var(--text-3);text-align:center}
-.auth-toggle span{color:var(--accent);cursor:pointer;text-decoration:underline}
-.auth-error{color:var(--red);font-family:var(--mono);font-size:.7rem;text-align:center;margin-top:12px;min-height:1.2em}
-.auth-pass-hint{font-family:var(--mono);font-size:.6rem;color:var(--text-3);text-align:center;line-height:1.6;margin:-4px 0 12px;padding:0 4px;display:none}
-.auth-loading{font-family:var(--mono);font-size:.75rem;color:var(--text-3)}
+/* AUTH */
+#auth{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:2rem}
+#auth h1{font-family:var(--m);font-size:1rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--ac);margin-bottom:2.5rem}
+.af{width:100%;max-width:280px}
+.af input{width:100%;padding:12px 14px;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);color:var(--t1);font-family:var(--m);font-size:.82rem;outline:none;margin-bottom:10px}
+.af input:focus{border-color:var(--acd)}
+.af input::placeholder{color:var(--t3)}
+.af-btn{width:100%;padding:12px;background:var(--ac);color:var(--bg);font-family:var(--m);font-size:.78rem;font-weight:600;letter-spacing:.05em;border-radius:var(--r);margin-top:4px}
+.af-hint{font-family:var(--m);font-size:.58rem;color:var(--t3);text-align:center;line-height:1.6;margin:-4px 0 10px;display:none}
+.af-toggle{margin-top:18px;font-family:var(--m);font-size:.68rem;color:var(--t3);text-align:center}
+.af-toggle span{color:var(--ac);cursor:pointer;text-decoration:underline}
+.af-err{color:var(--red);font-family:var(--m);font-size:.68rem;text-align:center;margin-top:10px;min-height:1em}
+.af-load{font-family:var(--m);font-size:.72rem;color:var(--t3)}
 
-#app{display:none;height:100%;flex-direction:column}
-#app.active{display:flex}
-.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;gap:10px}
-.header-title{font-family:var(--mono);font-size:.78rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.header-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
-.btn-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-2);font-size:1.05rem;transition:all var(--transition)}
-.btn-icon:hover{background:var(--surface-2);color:var(--text)}
-.main{flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;transition:background .3s}
-.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
-.sync-dot.error{background:var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* APP SHELL */
+#app{display:none;flex:1;flex-direction:column;height:100%;overflow:hidden}
+#app.on{display:flex}
+.hd{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);flex-shrink:0;gap:8px}
+.hd-t{font-family:var(--m);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ac);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hd-r{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.ib{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--s1);border:1px solid var(--bdr);border-radius:8px;color:var(--t2);font-size:.95rem;transition:all var(--tr)}
+.ib:hover{background:var(--s2);color:var(--t1)}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--grn);flex-shrink:0}
+.sd.sy{background:var(--amb);animation:pl 1s infinite}
+.sd.er{background:var(--red)}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
 
-.deck-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:8px;cursor:pointer;transition:all var(--transition)}
-.deck-card:hover{background:var(--surface-2);border-color:var(--accent-dim)}
-.deck-card:active{transform:scale(.99)}
-.deck-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.deck-card-name{font-family:var(--mono);font-size:.82rem;font-weight:600}
-.deck-card-menu{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--text-3);font-size:1rem;background:none;transition:all var(--transition)}
-.deck-card-menu:hover{background:var(--surface-3);color:var(--text-2)}
-.deck-card-stats{display:flex;gap:14px;font-family:var(--mono);font-size:.68rem}
-.stat{display:flex;align-items:center;gap:5px}
-.stat-dot{width:6px;height:6px;border-radius:50%}
-.stat-dot.new{background:var(--blue)}.stat-dot.due{background:var(--green)}.stat-dot.learning{background:var(--amber)}
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;color:var(--text-3);font-family:var(--mono);font-size:.78rem;text-align:center;line-height:2}
+/* SCROLLABLE MAIN */
+.mn{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
 
-.ctx-menu{position:fixed;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:6px;z-index:200;min-width:160px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:fadeIn 120ms ease}
-@keyframes fadeIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.ctx-item{display:block;width:100%;padding:10px 14px;font-family:var(--mono);font-size:.72rem;color:var(--text);background:none;text-align:left;border-radius:6px;transition:background var(--transition)}
-.ctx-item:hover{background:var(--surface-3)}
-.ctx-item.danger{color:var(--red)}
-.ctx-backdrop{position:fixed;inset:0;z-index:199}
+/* DECK CARDS */
+.dk{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;margin-bottom:7px;cursor:pointer;transition:all var(--tr)}
+.dk:active{transform:scale(.99)}
+.dk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dk-nm{font-family:var(--m);font-size:.78rem;font-weight:600}
+.dk-mn{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--t3);font-size:.9rem;background:none}
+.dk-st{display:flex;gap:12px;font-family:var(--m);font-size:.64rem;color:var(--t2)}
+.st{display:flex;align-items:center;gap:4px}
+.dot{width:5px;height:5px;border-radius:50%}
+.dot.n{background:var(--blu)}.dot.l{background:var(--amb)}.dot.d{background:var(--grn)}
+.empty{display:flex;align-items:center;justify-content:center;height:50%;color:var(--t3);font-family:var(--m);font-size:.75rem;text-align:center;line-height:2}
 
-.study-progress{display:flex;gap:10px;padding:10px 20px;font-family:var(--mono);font-size:.68rem;border-bottom:1px solid var(--border);flex-shrink:0}
-.study-stat{padding:4px 10px;border-radius:6px}
-.study-stat.new{background:var(--blue-bg);color:var(--blue)}
-.study-stat.learning{background:var(--amber-bg);color:var(--amber)}
-.study-stat.review{background:var(--green-bg);color:var(--green)}
+/* STUDY VIEW — key fix: this is a flex column that fills the screen */
+#sv{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.sp{display:flex;gap:8px;padding:8px 16px;font-family:var(--m);font-size:.64rem;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.ss{padding:3px 8px;border-radius:5px}
+.ss.n{background:var(--blu2);color:var(--blu)}.ss.l{background:var(--amb2);color:var(--amb)}.ss.r{background:var(--grn2);color:var(--grn)}
 
-.card-area{flex:1;display:flex;flex-direction:column;align-items:center;padding:0;cursor:pointer;user-select:none;-webkit-user-select:none;overflow-y:scroll;-webkit-overflow-scrolling:touch;position:relative}
-.card-area-inner{width:100%;max-width:500px;padding:24px;margin:0 auto}
-.card-content{width:100%;max-width:500px;min-height:120px;display:flex;flex-direction:column;padding-bottom:20px}
-.card-label{font-family:var(--mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:var(--text-3);margin-bottom:12px;text-align:center}
-.card-text{font-family:var(--serif);font-size:1.1rem;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word;text-align:left}
-.card-text.question{text-align:center;font-size:1.15rem}
-.card-text ul,.card-text ol{margin:8px 0 8px 20px}
-.card-text li{margin-bottom:4px}
-.card-text strong{color:var(--accent)}
-.card-divider{width:36px;height:1px;background:var(--border);margin:20px auto}
-.tap-hint{font-family:var(--mono);font-size:.62rem;color:var(--text-3);margin-top:16px;text-align:center}
+/* CARD AREA — this is the scrollable bit */
+#ca{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px 30px}
+.cc{max-width:480px;margin:0 auto}
+.cl{font-family:var(--m);font-size:.55rem;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin-bottom:10px}
+.ct{font-family:var(--s);font-size:1.05rem;line-height:1.7;color:var(--t1);white-space:pre-wrap;word-break:break-word}
+.ct.q{text-align:center;font-size:1.1rem}
+.ct ul{margin:6px 0 6px 18px;padding:0}
+.ct li{margin-bottom:3px}
+.ct strong{color:var(--ac)}
+.cdiv{width:30px;height:1px;background:var(--bdr);margin:18px 0}
+.hint{font-family:var(--m);font-size:.6rem;color:var(--t3);margin-top:14px;text-align:center}
 
-.answer-buttons{display:flex;gap:5px;padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0}
-.answer-btn{flex:1;padding:13px 6px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-family:var(--mono);font-size:.68rem;text-align:center;transition:all var(--transition)}
-.answer-btn .interval{display:block;font-size:.58rem;color:var(--text-3);margin-top:3px}
-.answer-btn:active{transform:scale(.97)}
-.answer-btn.again{border-color:var(--red);color:var(--red)}.answer-btn.again:hover{background:var(--red-bg)}
-.answer-btn.hard{border-color:var(--amber);color:var(--amber)}.answer-btn.hard:hover{background:var(--amber-bg)}
-.answer-btn.good{border-color:var(--green);color:var(--green)}.answer-btn.good:hover{background:var(--green-bg)}
-.answer-btn.easy{border-color:var(--blue);color:var(--blue)}.answer-btn.easy:hover{background:var(--blue-bg)}
+/* ANSWER BUTTONS — fixed at bottom */
+.ab{display:flex;gap:4px;padding:12px 14px;border-top:1px solid var(--bdr);flex-shrink:0}
+.abtn{flex:1;padding:11px 4px;border:1px solid var(--bdr);border-radius:7px;background:var(--s1);color:var(--t1);font-family:var(--m);font-size:.65rem;text-align:center;transition:all var(--tr)}
+.abtn span{display:block;font-size:.55rem;color:var(--t3);margin-top:2px}
+.abtn:active{transform:scale(.97)}
+.abtn.ag{border-color:var(--red);color:var(--red)}.abtn.hd2{border-color:var(--amb);color:var(--amb)}
+.abtn.gd{border-color:var(--grn);color:var(--grn)}.abtn.ez{border-color:var(--blu);color:var(--blu)}
 
-.study-done{text-align:center;padding:40px}
-.study-done h2{font-family:var(--mono);font-size:.85rem;font-weight:600;margin-bottom:6px}
-.study-done p{font-family:var(--mono);font-size:.72rem;color:var(--text-2)}
+.sdone{text-align:center;padding:40px}
+.sdone h2{font-family:var(--m);font-size:.8rem;font-weight:600;margin-bottom:5px}
+.sdone p{font-family:var(--m);font-size:.7rem;color:var(--t2)}
 
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:flex-end;justify-content:center}
-.modal-overlay.active{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;padding:24px 20px;animation:slideUp 200ms ease}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal h2{font-family:var(--mono);font-size:.78rem;font-weight:600;letter-spacing:.06em;margin-bottom:18px}
-.modal label{display:block;font-family:var(--mono);font-size:.65rem;color:var(--text-2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
-.modal input,.modal textarea,.modal select{width:100%;padding:11px 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.92rem;outline:none;margin-bottom:14px;transition:border-color var(--transition);resize:vertical}
-.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:var(--accent-dim)}
-.modal textarea{min-height:90px;line-height:1.6;font-family:var(--serif)}
-.modal-actions{display:flex;gap:8px;margin-top:6px}
-.btn{flex:1;padding:11px;border-radius:8px;font-family:var(--mono);font-size:.72rem;font-weight:600;text-align:center;transition:all var(--transition);border:1px solid var(--border)}
-.btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}.btn-primary:hover{opacity:.9}
-.btn-secondary{background:var(--surface-2);color:var(--text-2)}.btn-secondary:hover{background:var(--surface-3)}
-.btn-danger{background:var(--red-bg);color:var(--red);border-color:rgba(184,92,92,.3)}
+/* MODALS */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;align-items:flex-end;justify-content:center}
+.mo.on{display:flex}
+.ml{background:var(--s1);border:1px solid var(--bdr);border-radius:14px 14px 0 0;width:100%;max-width:480px;max-height:82vh;overflow-y:auto;padding:22px 18px;animation:su 180ms ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.ml h2{font-family:var(--m);font-size:.74rem;font-weight:600;letter-spacing:.05em;margin-bottom:16px}
+.ml label{display:block;font-family:var(--m);font-size:.6rem;color:var(--t2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.ml input,.ml textarea,.ml select{width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--bdr);border-radius:7px;color:var(--t1);font-size:.88rem;outline:none;margin-bottom:12px;resize:vertical}
+.ml input:focus,.ml textarea:focus,.ml select:focus{border-color:var(--acd)}
+.ml textarea{min-height:80px;line-height:1.6;font-family:var(--s)}
+.ma{display:flex;gap:7px;margin-top:4px}
+.bt{flex:1;padding:10px;border-radius:7px;font-family:var(--m);font-size:.68rem;font-weight:600;text-align:center;border:1px solid var(--bdr);transition:all var(--tr)}
+.bt-p{background:var(--ac);color:var(--bg);border-color:var(--ac)}.bt-s{background:var(--s2);color:var(--t2)}.bt-d{background:var(--red2);color:var(--red);border-color:rgba(184,92,92,.3)}
 
-.browse-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;transition:all var(--transition)}
-.browse-card:hover{border-color:var(--accent-dim)}
-.browse-card-content{flex:1;min-width:0;cursor:pointer}
-.browse-front{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.browse-back{font-size:.72rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.browse-meta{font-family:var(--mono);font-size:.55rem;color:var(--text-3);margin-top:3px}
-.browse-delete{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:none;color:var(--text-3);font-size:.9rem;flex-shrink:0;transition:all var(--transition)}
-.browse-delete:hover{background:var(--red-bg);color:var(--red)}
-.browse-status{font-family:var(--mono);font-size:.58rem;padding:2px 6px;border-radius:4px;flex-shrink:0}
-.browse-status.new{background:var(--blue-bg);color:var(--blue)}
-.browse-status.learning{background:var(--amber-bg);color:var(--amber)}
-.browse-status.review{background:var(--green-bg);color:var(--green)}
-.browse-status.suspended{background:var(--surface-3);color:var(--text-3)}
+/* BROWSE */
+.bc{background:var(--s2);border:1px solid var(--bdr);border-radius:7px;padding:10px 12px;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.bc-c{flex:1;min-width:0;cursor:pointer}
+.bc-f{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.bc-b{font-size:.68rem;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc-m{font-family:var(--m);font-size:.52rem;color:var(--t3);margin-top:2px}
+.bc-x{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;background:none;color:var(--t3);font-size:.8rem;flex-shrink:0}
+.bc-x:hover{background:var(--red2);color:var(--red)}
+.bc-s{font-family:var(--m);font-size:.54rem;padding:2px 5px;border-radius:3px;flex-shrink:0}
+.bc-s.new{background:var(--blu2);color:var(--blu)}.bc-s.learning{background:var(--amb2);color:var(--amb)}
+.bc-s.review{background:var(--grn2);color:var(--grn)}.bc-s.suspended{background:var(--s3);color:var(--t3)}
 
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-family:var(--mono);font-size:.72rem;color:var(--text);z-index:300;opacity:0;transition:all 200ms ease;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* CONTEXT MENU */
+.cm{position:fixed;background:var(--s2);border:1px solid var(--bdr);border-radius:9px;padding:5px;z-index:200;min-width:150px;box-shadow:0 10px 35px rgba(0,0,0,.5);animation:fi 100ms ease}
+@keyframes fi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.ci{display:block;width:100%;padding:9px 12px;font-family:var(--m);font-size:.68rem;color:var(--t1);background:none;text-align:left;border-radius:5px}
+.ci:hover{background:var(--s3)}.ci.dg{color:var(--red)}
+.cb{position:fixed;inset:0;z-index:199}
 
-.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:250;align-items:center;justify-content:center;padding:24px}
-.confirm-overlay.active{display:flex}
-.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:340px;width:100%;animation:fadeIn 150ms ease}
-.confirm-box p{font-family:var(--mono);font-size:.78rem;line-height:1.6;margin-bottom:18px}
-.confirm-actions{display:flex;gap:8px}
+/* SETTINGS */
+.sr{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bdr);font-family:var(--m);font-size:.72rem}
+.sr input{width:55px;text-align:center;margin:0;padding:7px;font-size:.78rem}
+.sh{font-family:var(--m);font-size:.55rem;color:var(--t3);margin:4px 0 12px;line-height:1.5}
+.slab{font-family:var(--m);font-size:.65rem;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px}
 
-.settings-section{margin-bottom:20px}
-.settings-section h3{font-family:var(--mono);font-size:.7rem;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
-.settings-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.75rem}
-.settings-row input[type="number"]{width:70px;text-align:center;margin:0;padding:8px;font-size:.8rem}
-.settings-hint{font-family:var(--mono);font-size:.58rem;color:var(--text-3);margin-top:4px}
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--s3);border:1px solid var(--bdr);border-radius:7px;padding:9px 16px;font-family:var(--m);font-size:.68rem;color:var(--t1);z-index:300;opacity:0;transition:all 180ms;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.view-hidden{display:none !important}
-@supports(padding-top:env(safe-area-inset-top)){.header{padding-top:calc(16px + env(safe-area-inset-top))}.answer-buttons{padding-bottom:calc(14px + env(safe-area-inset-bottom))}}
-.main::-webkit-scrollbar{width:4px}.main::-webkit-scrollbar-track{background:transparent}.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* CONFIRM */
+.co{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:250;align-items:center;justify-content:center;padding:20px}
+.co.on{display:flex}
+.cx{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:22px;max-width:320px;width:100%;animation:fi 120ms ease}
+.cx p{font-family:var(--m);font-size:.74rem;line-height:1.6;margin-bottom:16px}
+
+.vh{display:none !important}
+@supports(padding-top:env(safe-area-inset-top)){.hd{padding-top:calc(14px + env(safe-area-inset-top))}.ab{padding-bottom:calc(12px + env(safe-area-inset-bottom))}}
 </style>
 </head>
 <body>
 
-<div id="auth-screen">
+<div id="auth">
   <h1>Recall</h1>
-  <div class="auth-form" id="auth-form">
-    <input type="email" id="auth-email" placeholder="email" autocomplete="email">
-    <input type="password" id="auth-pass" placeholder="password" autocomplete="current-password">
-    <div class="auth-pass-hint" id="auth-pass-hint">Use a simple, unique password you don't use anywhere else. This is just a flashcard app.</div>
-    <button class="auth-btn" id="auth-submit" onclick="handleAuth()">Sign in</button>
-    <div class="auth-toggle"><span id="auth-toggle-link" onclick="toggleAuthMode()">Create account</span></div>
-    <div class="auth-error" id="auth-error"></div>
+  <div class="af" id="af">
+    <input type="email" id="ae" placeholder="email" autocomplete="email">
+    <input type="password" id="ap" placeholder="password" autocomplete="current-password">
+    <div class="af-hint" id="ah">Use a simple, unique password you don't use anywhere else.</div>
+    <button class="af-btn" id="ab" onclick="doAuth()">Sign in</button>
+    <div class="af-toggle"><span id="at" onclick="togAuth()">Create account</span></div>
+    <div class="af-err" id="aerr"></div>
   </div>
-  <div class="auth-loading" id="auth-loading" style="display:none;">loading...</div>
+  <div class="af-load" id="al" style="display:none">loading...</div>
 </div>
 
 <div id="app">
-  <div id="deck-list-view">
-    <div class="header">
-      <div class="header-title">Recall</div>
-      <div class="header-actions">
-        <div class="sync-dot" id="sync-dot" title="Sync status"></div>
-        <button class="btn-icon" onclick="openAddCard()" title="Add card">+</button>
-        <button class="btn-icon" onclick="openAddDeck()" title="New deck">◇</button>
-        <button class="btn-icon" onclick="openSettings()" title="Settings" style="font-size:.85rem">⚙</button>
-        <button class="btn-icon" onclick="handleSignOut()" title="Sign out">⏻</button>
+  <!-- DECK LIST -->
+  <div id="dv">
+    <div class="hd">
+      <div class="hd-t">Recall</div>
+      <div class="hd-r">
+        <div class="sd" id="sd"></div>
+        <button class="ib" onclick="addCard()">+</button>
+        <button class="ib" onclick="addDeck()">◇</button>
+        <button class="ib" onclick="openSet()" style="font-size:.82rem">⚙</button>
+        <button class="ib" onclick="signOut()">⏻</button>
       </div>
     </div>
-    <div class="main" id="deck-list"></div>
+    <div class="mn" id="dl"></div>
   </div>
-  <div id="study-view" class="view-hidden">
-    <div class="header">
-      <button class="btn-icon" onclick="exitStudy()">←</button>
-      <div class="header-title" id="study-deck-name"></div>
-      <div class="header-actions">
-        <button class="btn-icon" onclick="openAddCardToDeck()" title="Add card">+</button>
-        <button class="btn-icon" onclick="openBrowse()" title="Browse cards">☰</button>
+  <!-- STUDY -->
+  <div id="sv" class="vh">
+    <div class="hd">
+      <button class="ib" onclick="exitStudy()">←</button>
+      <div class="hd-t" id="sdn"></div>
+      <div class="hd-r">
+        <button class="ib" onclick="addCardDeck()">+</button>
+        <button class="ib" onclick="browse()">☰</button>
       </div>
     </div>
-    <div class="study-progress" id="study-progress"></div>
-    <div class="card-area" id="card-area">
-      <div class="card-area-inner">
-        <div class="card-content" id="card-content"></div>
-      </div>
-    </div>
-    <div class="answer-buttons" id="answer-buttons" style="display:none;"></div>
+    <div class="sp" id="sp"></div>
+    <div id="ca"></div>
+    <div class="ab" id="abtns" style="display:none"></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="card-modal" onclick="if(event.target===this)closeModal(this)">
-  <div class="modal">
-    <h2 id="card-modal-title">Add Card</h2>
-    <label>Deck</label>
-    <select id="card-deck-select"></select>
-    <label>Front</label>
-    <textarea id="card-front" placeholder="Question or prompt..."></textarea>
-    <label>Back</label>
-    <textarea id="card-back" placeholder="Answer...&#10;- bullet point&#10;- another point"></textarea>
-    <div id="card-schedule-section" style="display:none;">
+<!-- CARD MODAL -->
+<div class="mo" id="cm" onclick="if(event.target===this)clm(this)">
+  <div class="ml">
+    <h2 id="cmt">Add Card</h2>
+    <label>Deck</label><select id="cds"></select>
+    <label>Front</label><textarea id="cf" placeholder="Question or prompt..."></textarea>
+    <label>Back</label><textarea id="cbk" placeholder="Answer...&#10;- point one&#10;- point two"></textarea>
+    <div id="css" style="display:none">
       <label>Status</label>
-      <select id="card-status-select">
-        <option value="new">New</option>
-        <option value="learning">Learning</option>
-        <option value="review">Review</option>
-        <option value="suspended">Suspended (out of rotation)</option>
-      </select>
+      <select id="csst"><option value="new">New</option><option value="learning">Learning</option><option value="review">Review</option><option value="suspended">Suspended</option></select>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal(document.getElementById('card-modal'))">Cancel</button>
-      <button class="btn btn-danger" id="card-delete-btn" onclick="confirmDeleteCard()" style="display:none;">Delete</button>
-      <button class="btn btn-primary" onclick="saveCard()">Save</button>
+    <div class="ma">
+      <button class="bt bt-s" onclick="clm(document.getElementById('cm'))">Cancel</button>
+      <button class="bt bt-d" id="cdb" onclick="delCard()" style="display:none">Delete</button>
+      <button class="bt bt-p" onclick="saveC()">Save</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="deck-modal" onclick="if(event.target===this)closeModal(this)">
-  <div class="modal">
-    <h2 id="deck-modal-title">New Deck</h2>
-    <label>Name</label>
-    <input type="text" id="deck-name" placeholder="e.g. Pharmacology">
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal(document.getElementById('deck-modal'))">Cancel</button>
-      <button class="btn btn-primary" id="deck-save-btn" onclick="saveDeck()">Create</button>
+<!-- DECK MODAL -->
+<div class="mo" id="dm" onclick="if(event.target===this)clm(this)">
+  <div class="ml">
+    <h2 id="dmt">New Deck</h2>
+    <label>Name</label><input type="text" id="dn" placeholder="e.g. Pharmacology">
+    <div class="ma">
+      <button class="bt bt-s" onclick="clm(document.getElementById('dm'))">Cancel</button>
+      <button class="bt bt-p" id="dsb" onclick="saveD()">Create</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="browse-modal" onclick="if(event.target===this)closeModal(this)">
-  <div class="modal">
-    <h2 id="browse-title">Cards</h2>
-    <div id="browse-list" style="max-height:55vh;overflow-y:auto;"></div>
-    <div class="modal-actions" style="margin-top:14px;">
-      <button class="btn btn-secondary" onclick="closeModal(document.getElementById('browse-modal'))">Close</button>
-    </div>
+<!-- BROWSE MODAL -->
+<div class="mo" id="bm" onclick="if(event.target===this)clm(this)">
+  <div class="ml">
+    <h2 id="bt2">Cards</h2>
+    <div id="bl" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="ma" style="margin-top:12px"><button class="bt bt-s" onclick="clm(document.getElementById('bm'))">Close</button></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeModal(this)">
-  <div class="modal">
+<!-- SETTINGS MODAL -->
+<div class="mo" id="sm" onclick="if(event.target===this)clm(this)">
+  <div class="ml">
     <h2>Settings</h2>
-    <div class="settings-section">
-      <h3>Study</h3>
-      <div class="settings-row"><span>New cards per day</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-new-per-day" value="20" style="width:60px;text-align:center;margin:0;padding:8px"></div>
-      <div class="settings-row"><span>Max reviews per session</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-max-reviews" value="50" style="width:60px;text-align:center;margin:0;padding:8px"></div>
-      <div class="settings-hint">Caps how many cards you see per session. Remaining cards roll to next time. Set high (e.g. 999) for no limit.</div>
-    </div>
-    <div class="settings-section">
-      <h3>Intervals (days)</h3>
-      <div class="settings-hint" style="margin-bottom:8px">How many days until you see a card again after each answer (for first review of a new card).</div>
-      <div class="settings-row"><span>Again</span><span style="color:var(--text-3)">always 0</span></div>
-      <div class="settings-row"><span>Hard</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-interval-hard" value="1" style="width:60px;text-align:center;margin:0;padding:8px"></div>
-      <div class="settings-row"><span>Good</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-interval-good" value="1" style="width:60px;text-align:center;margin:0;padding:8px"></div>
-      <div class="settings-row"><span>Easy</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-interval-easy" value="4" style="width:60px;text-align:center;margin:0;padding:8px"></div>
-      <div class="settings-hint">After the first review, intervals grow automatically based on SM-2 spacing.</div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal(document.getElementById('settings-modal'))">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
-    </div>
+    <div class="slab">Study</div>
+    <div class="sr"><span>New cards / day</span><input type="text" inputmode="numeric" id="snpd" value="20"></div>
+    <div class="sr"><span>Max cards / session</span><input type="text" inputmode="numeric" id="smr" value="50"></div>
+    <div class="sh">Caps total cards per session. Overflow rolls to next time.</div>
+    <div class="slab">First-review intervals (days)</div>
+    <div class="sr"><span>Again</span><span style="color:var(--t3)">0</span></div>
+    <div class="sr"><span>Hard</span><input type="text" inputmode="numeric" id="sih" value="1"></div>
+    <div class="sr"><span>Good</span><input type="text" inputmode="numeric" id="sig" value="1"></div>
+    <div class="sr"><span>Easy</span><input type="text" inputmode="numeric" id="sie" value="4"></div>
+    <div class="sh">After first review, intervals grow automatically via SM-2.</div>
+    <div class="ma"><button class="bt bt-s" onclick="clm(document.getElementById('sm'))">Cancel</button><button class="bt bt-p" onclick="saveSet()">Save</button></div>
   </div>
 </div>
 
-<div id="ctx-backdrop" class="ctx-backdrop" style="display:none;" onclick="closeCtx()"></div>
-<div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
+<!-- CTX MENU -->
+<div id="cxb" class="cb" style="display:none" onclick="cxClose()"></div>
+<div id="cxm" class="cm" style="display:none"></div>
 
-<div class="confirm-overlay" id="confirm-overlay">
-  <div class="confirm-box">
-    <p id="confirm-msg"></p>
-    <div class="confirm-actions">
-      <button class="btn btn-secondary" onclick="confirmCancel()">Cancel</button>
-      <button class="btn btn-danger" id="confirm-yes" onclick="confirmYes()">Delete</button>
-    </div>
+<!-- CONFIRM -->
+<div class="co" id="cfo">
+  <div class="cx"><p id="cfm"></p>
+    <div class="ma"><button class="bt bt-s" onclick="cfNo()">Cancel</button><button class="bt bt-d" id="cfy" onclick="cfYes()">Delete</button></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="tst"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
 <script>
-firebase.initializeApp({
-  apiKey:"AIzaSyDV8jw5xCpfUtq7R9HkY5IVMvLBMMLLe3c",authDomain:"recall-app-42d15.firebaseapp.com",
-  projectId:"recall-app-42d15",storageBucket:"recall-app-42d15.firebasestorage.app",
-  messagingSenderId:"355076381247",appId:"1:355076381247:web:cd3249678d85332957b68a"
-});
-const auth=firebase.auth(),firestore=firebase.firestore();
-firestore.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+firebase.initializeApp({apiKey:"AIzaSyDV8jw5xCpfUtq7R9HkY5IVMvLBMMLLe3c",authDomain:"recall-app-42d15.firebaseapp.com",projectId:"recall-app-42d15",storageBucket:"recall-app-42d15.firebasestorage.app",messagingSenderId:"355076381247",appId:"1:355076381247:web:cd3249678d85332957b68a"});
+const A=firebase.auth(),F=firebase.firestore();
+F.enablePersistence({synchronizeTabs:true}).catch(()=>{});
 
-let db={decks:[],cards:[]},settings={newPerDay:20,maxReviews:50,intervalHard:1,intervalGood:1,intervalEasy:4};
-let currentUser=null,currentDeckId=null,studyQueue=[],currentCardIndex=0,answerRevealed=false;
-let editingCardId=null,editingDeckId=null,confirmCallback=null,unsubDecks=null,unsubCards=null,unsubSettings=null;
-let authMode='signin';
+let D={decks:[],cards:[]},S={newPerDay:20,maxReviews:50,iH:1,iG:1,iE:4};
+let U=null,curDk=null,Q=[],qi=0,revealed=false,editCid=null,editDid=null,cfCb=null;
+let unsD=null,unsC=null,unsS=null,aMode='signin';
 
-// ── AUTH ──
-function toggleAuthMode(){
-  authMode=authMode==='signin'?'signup':'signin';
-  document.getElementById('auth-submit').textContent=authMode==='signin'?'Sign in':'Create account';
-  document.getElementById('auth-toggle-link').textContent=authMode==='signin'?'Create account':'Sign in instead';
-  document.getElementById('auth-error').textContent='';
-  document.getElementById('auth-pass-hint').style.display=authMode==='signup'?'block':'none';
+// AUTH
+function togAuth(){aMode=aMode==='signin'?'signup':'signin';$('ab').textContent=aMode==='signin'?'Sign in':'Create account';$('at').textContent=aMode==='signin'?'Create account':'Sign in instead';$('aerr').textContent='';$('ah').style.display=aMode==='signup'?'block':'none'}
+async function doAuth(){const e=$('ae').value.trim(),p=$('ap').value;if(!e||!p){$('aerr').textContent='Enter email and password';return}$('aerr').textContent='';try{if(aMode==='signup')await A.createUserWithEmailAndPassword(e,p);else await A.signInWithEmailAndPassword(e,p)}catch(x){const m={'auth/user-not-found':'No account found','auth/wrong-password':'Wrong password','auth/invalid-credential':'Invalid email or password','auth/email-already-in-use':'Email taken','auth/weak-password':'Password needs 6+ chars','auth/invalid-email':'Invalid email','auth/too-many-requests':'Too many attempts'};$('aerr').textContent=m[x.code]||x.message}}
+$('ap').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
+$('ae').addEventListener('keydown',e=>{if(e.key==='Enter')$('ap').focus()});
+A.onAuthStateChanged(u=>{if(u){U=u;$('auth').style.display='none';$('app').classList.add('on');sub()}else{U=null;$('app').classList.remove('on');$('auth').style.display='flex';$('af').style.display='';$('al').style.display='none';if(unsD)unsD();if(unsC)unsC();if(unsS)unsS()}});
+$('af').style.display='none';$('al').style.display='';
+setTimeout(()=>{if(!U){$('af').style.display='';$('al').style.display='none'}},2000);
+function signOut(){confirm2('Sign out?','Sign out',()=>{A.signOut();D={decks:[],cards:[]};exitStudy()})}
+
+// FIRESTORE
+function uRef(){return F.collection('users').doc(U.uid)}
+function sub(){
+  sync('sy');
+  unsD=uRef().collection('decks').onSnapshot(s=>{D.decks=s.docs.map(d=>({id:d.id,...d.data()}));renderDL();sync('')},()=>sync('er'));
+  unsC=uRef().collection('cards').onSnapshot(s=>{D.cards=s.docs.map(d=>({id:d.id,...d.data()}));sync('')},()=>sync('er'));
+  unsS=uRef().onSnapshot(s=>{if(s.exists&&s.data().settings){S={...S,...s.data().settings}}},()=>{});
 }
-async function handleAuth(){
-  const email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-pass').value;
-  if(!email||!pass){document.getElementById('auth-error').textContent='Enter email and password';return}
-  document.getElementById('auth-error').textContent='';
-  try{if(authMode==='signup')await auth.createUserWithEmailAndPassword(email,pass);else await auth.signInWithEmailAndPassword(email,pass)}
-  catch(e){const m={'auth/user-not-found':'No account with that email','auth/wrong-password':'Wrong password','auth/invalid-credential':'Invalid email or password','auth/email-already-in-use':'Email already in use','auth/weak-password':'Password must be 6+ characters','auth/invalid-email':'Invalid email','auth/too-many-requests':'Too many attempts, try later'};document.getElementById('auth-error').textContent=m[e.code]||e.message}
-}
-document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleAuth()});
-document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-pass').focus()});
-auth.onAuthStateChanged(user=>{
-  if(user){currentUser=user;document.getElementById('auth-screen').style.display='none';document.getElementById('app').classList.add('active');subscribeToData()}
-  else{currentUser=null;document.getElementById('app').classList.remove('active');document.getElementById('auth-screen').style.display='flex';document.getElementById('auth-form').style.display='';document.getElementById('auth-loading').style.display='none';if(unsubDecks)unsubDecks();if(unsubCards)unsubCards();if(unsubSettings)unsubSettings()}
-});
-document.getElementById('auth-form').style.display='none';document.getElementById('auth-loading').style.display='';
-setTimeout(()=>{if(!currentUser){document.getElementById('auth-form').style.display='';document.getElementById('auth-loading').style.display='none'}},2000);
-function handleSignOut(){showConfirm('Sign out?','Sign out',()=>{auth.signOut();db={decks:[],cards:[]};exitStudy()})}
+function sync(s){$('sd').className='sd'+(s?' '+s:'')}
+async function fbSD(dk){sync('sy');const{id,...d}=dk;await uRef().collection('decks').doc(id).set(d)}
+async function fbDD(id){sync('sy');await uRef().collection('decks').doc(id).delete();const s=await uRef().collection('cards').where('deckId','==',id).get();const b=F.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit()}
+async function fbSC(c){sync('sy');const{id,...d}=c;await uRef().collection('cards').doc(id).set(d)}
+async function fbDC(id){sync('sy');await uRef().collection('cards').doc(id).delete()}
+async function fbSS(){await uRef().set({settings:S},{merge:true})}
 
-// ── FIRESTORE ──
-function userRef(){return firestore.collection('users').doc(currentUser.uid)}
-function subscribeToData(){
-  setSyncStatus('syncing');
-  unsubDecks=userRef().collection('decks').onSnapshot(s=>{db.decks=s.docs.map(d=>({id:d.id,...d.data()}));renderDecks();setSyncStatus('')},()=>setSyncStatus('error'));
-  unsubCards=userRef().collection('cards').onSnapshot(s=>{db.cards=s.docs.map(d=>({id:d.id,...d.data()}));setSyncStatus('')},()=>setSyncStatus('error'));
-  unsubSettings=userRef().onSnapshot(s=>{if(s.exists&&s.data().settings){settings={...settings,...s.data().settings}}},()=>{});
-}
-function setSyncStatus(s){document.getElementById('sync-dot').className='sync-dot'+(s?' '+s:'')}
-async function fbSaveDeck(deck){setSyncStatus('syncing');const{id,...d}=deck;await userRef().collection('decks').doc(id).set(d)}
-async function fbDeleteDeck(deckId){setSyncStatus('syncing');await userRef().collection('decks').doc(deckId).delete();const s=await userRef().collection('cards').where('deckId','==',deckId).get();const b=firestore.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit()}
-async function fbSaveCard(card){setSyncStatus('syncing');const{id,...d}=card;await userRef().collection('cards').doc(id).set(d)}
-async function fbDeleteCard(cardId){setSyncStatus('syncing');await userRef().collection('cards').doc(cardId).delete()}
-async function fbSaveSettings(){await userRef().set({settings},{ merge:true })}
-
-// ── SM-2 ──
-function createCard(deckId,front,back){return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),deckId,front,back,interval:0,repetition:0,easeFactor:2.5,due:Date.now(),lapses:0,status:'new'}}
-
-function sm2(card,quality){
-  const q=[0,2,3,5][quality];let{interval,repetition,easeFactor}=card;
-  if(q<3){card.lapses++;card.status='learning';card.interval=0;card.repetition=0;card.due=Date.now()}
+// SM-2
+function mkCard(dk,f,b){return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),deckId:dk,front:f,back:b,interval:0,repetition:0,easeFactor:2.5,due:Date.now(),lapses:0,status:'new'}}
+function sm2(c,q){
+  const v=[0,2,3,5][q];let{interval:iv,repetition:rp,easeFactor:ef}=c;
+  if(v<3){c.lapses++;c.status='learning';c.interval=0;c.repetition=0;c.due=Date.now()}
   else{
-    if(repetition===0){
-      if(quality===1)interval=settings.intervalHard||1;
-      else if(quality===3)interval=settings.intervalEasy||4;
-      else interval=settings.intervalGood||1;
-    }
-    else if(repetition===1){
-      if(quality===1)interval=Math.max(1,Math.round((settings.intervalGood||1)*1.5));
-      else if(quality===3)interval=Math.max(1,Math.round((settings.intervalGood||1)*3));
-      else interval=Math.max(1,Math.round((settings.intervalGood||1)*2));
-    }
-    else{interval=Math.round(interval*easeFactor);if(quality===1)interval=Math.max(1,Math.round(interval*.8));if(quality===3)interval=Math.round(interval*1.3)}
-    easeFactor+=.1-(5-q)*(.08+(5-q)*.02);if(easeFactor<1.3)easeFactor=1.3;
-    card.interval=interval;card.repetition=repetition+1;card.easeFactor=easeFactor;card.status='review';card.due=Date.now()+interval*86400000;
+    if(rp===0){iv=q===1?(S.iH||1):q===3?(S.iE||4):(S.iG||1)}
+    else if(rp===1){const base=q===1?(S.iH||1):q===3?(S.iE||4):(S.iG||1);iv=Math.max(1,Math.round(base*2))}
+    else{iv=Math.round(iv*ef);if(q===1)iv=Math.max(1,Math.round(iv*.8));if(q===3)iv=Math.round(iv*1.3)}
+    ef+=.1-(5-v)*(.08+(5-v)*.02);if(ef<1.3)ef=1.3;
+    c.interval=iv;c.repetition=rp+1;c.easeFactor=ef;c.status='review';c.due=Date.now()+iv*86400000;
   }
-  return card;
+  return c;
+}
+function fmtIv(c,q){
+  const v=[0,2,3,5][q];if(v<3)return'now';let{interval:iv,repetition:rp,easeFactor:ef}=c;
+  if(rp===0)return(q===1?(S.iH||1):q===3?(S.iE||4):(S.iG||1))+'d';
+  if(rp===1){const base=q===1?(S.iH||1):q===3?(S.iE||4):(S.iG||1);return Math.max(1,Math.round(base*2))+'d'}
+  let r=Math.round(iv*ef);if(q===1)r=Math.max(1,Math.round(r*.8));if(q===3)r=Math.round(r*1.3);
+  return r<30?r+'d':r<365?Math.round(r/30)+'mo':(r/365).toFixed(1)+'y';
 }
 
-function formatInterval(card,quality){
-  const q=[0,2,3,5][quality];if(q<3)return'now';let{interval,repetition,easeFactor}=card;
-  if(repetition===0){
-    if(quality===1)return(settings.intervalHard||1)+'d';
-    if(quality===3)return(settings.intervalEasy||4)+'d';
-    return(settings.intervalGood||1)+'d';
-  }
-  if(repetition===1){
-    if(quality===1)return Math.max(1,Math.round((settings.intervalGood||1)*1.5))+'d';
-    if(quality===3)return Math.max(1,Math.round((settings.intervalGood||1)*3))+'d';
-    return Math.max(1,Math.round((settings.intervalGood||1)*2))+'d';
-  }
-  let iv=Math.round(interval*easeFactor);if(quality===1)iv=Math.max(1,Math.round(iv*.8));if(quality===3)iv=Math.round(iv*1.3);
-  if(iv<30)return iv+'d';if(iv<365)return Math.round(iv/30)+'mo';return(iv/365).toFixed(1)+'y';
-}
-
-// ── RENDER HELPERS ──
+// HELPERS
+function $(id){return document.getElementById(id)}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function renderCardText(raw){
-  let t=esc(raw);
-  t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-  t=t.replace(/^- (.+)$/gm,'<li>$1</li>');
-  t=t.replace(/(<li>[\s\S]*?<\/li>)/g,m=>{if(!m.startsWith('<ul>'))return'<ul>'+m+'</ul>';return m});
-  t=t.replace(/<\/ul>\s*<ul>/g,'');
-  return t;
-}
+function render(raw){let t=esc(raw);t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');t=t.replace(/^- (.+)$/gm,'<li>$1</li>');t=t.replace(/(<li>[\s\S]*?<\/li>)/g,m=>m.startsWith('<ul>')?m:'<ul>'+m+'</ul>');t=t.replace(/<\/ul>\s*<ul>/g,'');return t}
+function dueTxt(c){if(c.status==='new')return'new';if(c.status==='suspended')return'suspended';const d=Math.max(0,Math.ceil((c.due-Date.now())/864e5));return d<=0?'due now':d+'d'}
+function opm(el){el.classList.add('on')}
+function clm(el){el.classList.remove('on')}
 
-function daysUntilDue(card){return Math.max(0,Math.ceil((card.due-Date.now())/86400000))}
-function formatDueDate(card){const d=daysUntilDue(card);if(card.status==='new')return'new';if(card.status==='suspended')return'suspended';if(d<=0)return'due now';if(d===1)return'1 day';return d+' days'}
-
-// ── DECK LIST ──
-function renderDecks(){
-  const el=document.getElementById('deck-list');
-  if(db.decks.length===0){el.innerHTML='<div class="empty-state">No decks yet.<br>Tap ◇ to create one.</div>';return}
+// DECK LIST
+function renderDL(){
+  const el=$('dl');if(!D.decks.length){el.innerHTML='<div class="empty">No decks yet. Tap ◇ to create one.</div>';return}
   const now=Date.now();
-  el.innerHTML=db.decks.map(deck=>{
-    const cards=db.cards.filter(c=>c.deckId===deck.id&&c.status!=='suspended');
-    const all=db.cards.filter(c=>c.deckId===deck.id);
-    const susp=all.length-cards.length;
-    return`<div class="deck-card" onclick="startStudy('${deck.id}')">
-      <div class="deck-card-top"><div class="deck-card-name">${esc(deck.name)}</div>
-      <button class="deck-card-menu" onclick="event.stopPropagation();showDeckMenu(event,'${deck.id}')">⋯</button></div>
-      <div class="deck-card-stats">
-        <div class="stat"><span class="stat-dot new"></span>${cards.filter(c=>c.status==='new').length} new</div>
-        <div class="stat"><span class="stat-dot learning"></span>${cards.filter(c=>c.status==='learning'&&c.due<=now).length} learn</div>
-        <div class="stat"><span class="stat-dot due"></span>${cards.filter(c=>c.status==='review'&&c.due<=now).length} due</div>
-        <div class="stat" style="color:var(--text-3)">${all.length} total${susp?' ('+susp+' off)':''}</div>
-      </div></div>`}).join('');
+  el.innerHTML=D.decks.map(dk=>{
+    const cs=D.cards.filter(c=>c.deckId===dk.id),ac=cs.filter(c=>c.status!=='suspended'),su=cs.length-ac.length;
+    return`<div class="dk" onclick="study('${dk.id}')"><div class="dk-top"><div class="dk-nm">${esc(dk.name)}</div><button class="dk-mn" onclick="event.stopPropagation();cxDk(event,'${dk.id}')">⋯</button></div><div class="dk-st"><div class="st"><span class="dot n"></span>${ac.filter(c=>c.status==='new').length}</div><div class="st"><span class="dot l"></span>${ac.filter(c=>c.status==='learning'&&c.due<=now).length}</div><div class="st"><span class="dot d"></span>${ac.filter(c=>c.status==='review'&&c.due<=now).length}</div><div class="st" style="color:var(--t3)">${cs.length}${su?' · '+su+' off':''}</div></div></div>`}).join('');
 }
 
-// ── CONTEXT MENU ──
-function showDeckMenu(event,deckId){
-  const menu=document.getElementById('ctx-menu'),backdrop=document.getElementById('ctx-backdrop');
-  menu.innerHTML=`<button class="ctx-item" onclick="closeCtx();openBrowseDeck('${deckId}')">Browse cards</button>
-    <button class="ctx-item" onclick="closeCtx();openRenameDeck('${deckId}')">Rename</button>
-    <button class="ctx-item" onclick="closeCtx();openAddCardToDeckId('${deckId}')">Add card</button>
-    <button class="ctx-item danger" onclick="closeCtx();confirmDeleteDeck('${deckId}')">Delete deck</button>`;
-  const r=event.target.getBoundingClientRect();let top=r.bottom+4,left=r.right-160;
-  if(left<10)left=10;if(top+200>window.innerHeight)top=r.top-180;
-  menu.style.top=top+'px';menu.style.left=left+'px';menu.style.display='';backdrop.style.display='';
-}
-function closeCtx(){document.getElementById('ctx-menu').style.display='none';document.getElementById('ctx-backdrop').style.display='none'}
+// CTX MENU
+function cxDk(ev,id){const m=$('cxm'),b=$('cxb');m.innerHTML=`<button class="ci" onclick="cxClose();browseDk('${id}')">Browse</button><button class="ci" onclick="cxClose();renameDk('${id}')">Rename</button><button class="ci" onclick="cxClose();addCardId('${id}')">Add card</button><button class="ci dg" onclick="cxClose();delDk('${id}')">Delete</button>`;const r=ev.target.getBoundingClientRect();let t=r.bottom+4,l=r.right-150;if(l<8)l=8;if(t+180>innerHeight)t=r.top-170;m.style.top=t+'px';m.style.left=l+'px';m.style.display='';b.style.display=''}
+function cxClose(){$('cxm').style.display='none';$('cxb').style.display='none'}
 
-// ── STUDY ──
-function startStudy(deckId){
-  currentDeckId=deckId;const deck=db.decks.find(d=>d.id===deckId);if(!deck)return;
-  document.getElementById('study-deck-name').textContent=deck.name;
-  document.getElementById('deck-list-view').classList.add('view-hidden');
-  document.getElementById('study-view').classList.remove('view-hidden');
-  buildQueue();showNextCard();
+// STUDY
+function study(id){
+  curDk=id;const dk=D.decks.find(d=>d.id===id);if(!dk)return;
+  $('sdn').textContent=dk.name;$('dv').classList.add('vh');$('sv').classList.remove('vh');
+  buildQ();showCard();
 }
-function buildQueue(){
-  const now=Date.now(),cards=db.cards.filter(c=>c.deckId===currentDeckId&&c.status!=='suspended');
-  const learning=cards.filter(c=>c.status==='learning'&&c.due<=now);
-  const due=cards.filter(c=>c.status==='review'&&c.due<=now);
-  const newCards=cards.filter(c=>c.status==='new').slice(0,settings.newPerDay||20);
-  const pool=[...due,...newCards];shuffle(pool);
-  let queue=[...learning,...pool];
-  const max=settings.maxReviews||50;
-  if(queue.length>max)queue=queue.slice(0,max);
-  studyQueue=queue;currentCardIndex=0;
+function buildQ(){
+  const now=Date.now(),cs=D.cards.filter(c=>c.deckId===curDk&&c.status!=='suspended');
+  const lr=cs.filter(c=>c.status==='learning'&&c.due<=now);
+  const du=cs.filter(c=>c.status==='review'&&c.due<=now);
+  const nw=cs.filter(c=>c.status==='new').slice(0,S.newPerDay||20);
+  const pool=[...du,...nw];shuf(pool);let q=[...lr,...pool];
+  if(q.length>(S.maxReviews||50))q=q.slice(0,S.maxReviews||50);
+  Q=q;qi=0;
 }
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
 
-function showNextCard(){
-  updateStudyProgress();const area=document.getElementById('card-content'),btns=document.getElementById('answer-buttons');
-  if(currentCardIndex>=studyQueue.length){
-    const now=Date.now(),learning=db.cards.filter(c=>c.deckId===currentDeckId&&c.status==='learning'&&c.due<=now);
-    if(learning.length>0){studyQueue=learning;currentCardIndex=0}
-    else{area.innerHTML='<div class="study-done"><h2>Done for now</h2><p>All cards reviewed</p></div>';btns.style.display='none';return}
+function showCard(){
+  updProg();const ca=$('ca'),btns=$('abtns');
+  if(qi>=Q.length){
+    const now=Date.now(),lr=D.cards.filter(c=>c.deckId===curDk&&c.status==='learning'&&c.due<=now);
+    if(lr.length){Q=lr;qi=0}else{ca.innerHTML='<div class="sdone"><h2>Done</h2><p>All cards reviewed</p></div>';btns.style.display='none';return}
   }
-  const card=studyQueue[currentCardIndex];answerRevealed=false;btns.style.display='none';
-  document.getElementById('card-area').scrollTop=0;
-  area.innerHTML=`<div class="card-label">${card.status==='new'?'new':card.status}</div>
-    <div class="card-text question">${renderCardText(card.front)}</div>
-    <div class="tap-hint">tap to reveal</div>`;
+  const c=Q[qi];revealed=false;btns.style.display='none';ca.scrollTop=0;
+  ca.innerHTML=`<div class="cc"><div class="cl">${c.status==='new'?'new':c.status}</div><div class="ct q">${render(c.front)}</div><div class="hint">tap to reveal</div></div>`;
 }
 
-function revealAnswer(){
-  if(answerRevealed||currentCardIndex>=studyQueue.length)return;answerRevealed=true;
-  const card=studyQueue[currentCardIndex];
-  document.getElementById('card-area').scrollTop=0;
-  document.getElementById('card-content').innerHTML=`<div class="card-label">question</div>
-    <div class="card-text question">${renderCardText(card.front)}</div>
-    <div class="card-divider"></div>
-    <div class="card-label">answer</div>
-    <div class="card-text">${renderCardText(card.back)}</div>`;
-  const btns=document.getElementById('answer-buttons');btns.style.display='flex';
-  btns.innerHTML=[{q:0,label:'Again',cls:'again'},{q:1,label:'Hard',cls:'hard'},{q:2,label:'Good',cls:'good'},{q:3,label:'Easy',cls:'easy'}]
-    .map(b=>`<button class="answer-btn ${b.cls}" onclick="answerCard(${b.q})">${b.label}<span class="interval">${formatInterval(card,b.q)}</span></button>`).join('');
+function reveal(){
+  if(revealed||qi>=Q.length)return;revealed=true;
+  const c=Q[qi];$('ca').scrollTop=0;
+  $('ca').innerHTML=`<div class="cc"><div class="cl">question</div><div class="ct q">${render(c.front)}</div><div class="cdiv"></div><div class="cl">answer</div><div class="ct">${render(c.back)}</div></div>`;
+  const btns=$('abtns');btns.style.display='flex';
+  btns.innerHTML=[{q:0,l:'Again',c:'ag'},{q:1,l:'Hard',c:'hd2'},{q:2,l:'Good',c:'gd'},{q:3,l:'Easy',c:'ez'}].map(b=>`<button class="abtn ${b.c}" onclick="ans(${b.q})">${b.l}<span>${fmtIv(c,b.q)}</span></button>`).join('');
 }
 
-// Touch-aware tap detection for card area — allows scrolling without triggering reveal
+// Touch-aware tap — allows scrolling
 (function(){
-  const ca=document.getElementById('card-area');
-  let startY=0,moved=false;
-  ca.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;moved=false},{passive:true});
-  ca.addEventListener('touchmove',e=>{if(Math.abs(e.touches[0].clientY-startY)>10)moved=true},{passive:true});
-  ca.addEventListener('touchend',e=>{if(!moved)revealAnswer()});
-  ca.addEventListener('click',e=>{if(!('ontouchstart' in window))revealAnswer()});
-  ca.onclick=null;
+  let sy=0,moved=false;
+  const el=$('ca');
+  el.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;moved=false},{passive:true});
+  el.addEventListener('touchmove',e=>{if(Math.abs(e.touches[0].clientY-sy)>8)moved=true},{passive:true});
+  el.addEventListener('touchend',()=>{if(!moved)reveal()});
+  el.addEventListener('click',e=>{if(!('ontouchstart' in window))reveal()});
 })();
 
-function answerCard(quality){const card=studyQueue[currentCardIndex];sm2(card,quality);fbSaveCard(card);if(quality===0)studyQueue.push(card);currentCardIndex++;showNextCard()}
+function ans(q){const c=Q[qi];sm2(c,q);fbSC(c);if(q===0)Q.push(c);qi++;showCard()}
+function updProg(){const cs=D.cards.filter(c=>c.deckId===curDk&&c.status!=='suspended'),now=Date.now();$('sp').innerHTML=`<span class="ss n">${cs.filter(c=>c.status==='new').length} new</span><span class="ss l">${cs.filter(c=>c.status==='learning').length} learn</span><span class="ss r">${cs.filter(c=>c.status==='review'&&c.due<=now).length} review</span>`}
+function exitStudy(){$('sv').classList.add('vh');$('dv').classList.remove('vh');curDk=null;renderDL()}
 
-function updateStudyProgress(){
-  const cards=db.cards.filter(c=>c.deckId===currentDeckId&&c.status!=='suspended'),now=Date.now();
-  document.getElementById('study-progress').innerHTML=`
-    <span class="study-stat new">${cards.filter(c=>c.status==='new').length} new</span>
-    <span class="study-stat learning">${cards.filter(c=>c.status==='learning').length} learn</span>
-    <span class="study-stat review">${cards.filter(c=>c.status==='review'&&c.due<=now).length} review</span>`;
+// CARD CRUD
+function addCard(){editCid=null;$('cmt').textContent='Add Card';$('cdb').style.display='none';$('css').style.display='none';$('cf').value='';$('cbk').value='';popDkSel();opm($('cm'));setTimeout(()=>$('cf').focus(),120)}
+function addCardDeck(){addCard();if(curDk)$('cds').value=curDk}
+function addCardId(id){addCard();$('cds').value=id}
+function editCard(id){const c=D.cards.find(x=>x.id===id);if(!c)return;editCid=id;$('cmt').textContent='Edit Card';$('cdb').style.display='';$('css').style.display='';$('cf').value=c.front;$('cbk').value=c.back;$('csst').value=c.status||'new';popDkSel(c.deckId);opm($('cm'))}
+function popDkSel(sel){$('cds').innerHTML=D.decks.map(d=>`<option value="${d.id}" ${d.id===(sel||curDk||'')?'selected':''}>${esc(d.name)}</option>`).join('')}
+async function saveC(){const f=$('cf').value.trim(),b=$('cbk').value.trim(),dk=$('cds').value;if(!f||!b){toast('Fill in both sides');return}if(!dk){toast('Select a deck');return}if(editCid){const c=D.cards.find(x=>x.id===editCid);if(c){c.front=f;c.back=b;c.deckId=dk;c.status=$('csst').value;await fbSC(c);toast('Updated')}}else{await fbSC(mkCard(dk,f,b));toast('Added')}clm($('cm'));if(curDk){buildQ();showCard()}}
+function delCard(){if(!editCid)return;confirm2('Delete this card?','Delete',async()=>{await fbDC(editCid);clm($('cm'));toast('Deleted');if(curDk){buildQ();showCard()}})}
+
+// DECK CRUD
+function addDeck(){editDid=null;$('dmt').textContent='New Deck';$('dsb').textContent='Create';$('dn').value='';opm($('dm'));setTimeout(()=>$('dn').focus(),120)}
+function renameDk(id){const dk=D.decks.find(d=>d.id===id);if(!dk)return;editDid=id;$('dmt').textContent='Rename';$('dsb').textContent='Save';$('dn').value=dk.name;opm($('dm'));setTimeout(()=>$('dn').focus(),120)}
+async function saveD(){const n=$('dn').value.trim();if(!n)return;if(editDid){const dk=D.decks.find(d=>d.id===editDid);if(dk){dk.name=n;await fbSD(dk);toast('Renamed')}}else{await fbSD({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:n});toast('Created')}clm($('dm'))}
+$('dn').addEventListener('keydown',e=>{if(e.key==='Enter')saveD()});
+function delDk(id){const dk=D.decks.find(d=>d.id===id);const n=D.cards.filter(c=>c.deckId===id).length;confirm2(`Delete "${esc(dk?.name||'')}" and ${n} card${n!==1?'s':''}?`,'Delete',async()=>{await fbDD(id);toast('Deleted')})}
+
+// BROWSE
+function browse(){if(curDk)browseDk(curDk)}
+function browseDk(id){
+  const dk=D.decks.find(d=>d.id===id);if(!dk)return;$('bt2').textContent=dk.name;
+  const cs=D.cards.filter(c=>c.deckId===id),el=$('bl');
+  if(!cs.length)el.innerHTML='<div style="color:var(--t3);font-family:var(--m);font-size:.7rem;padding:16px 0;text-align:center">No cards</div>';
+  else el.innerHTML=cs.map(c=>`<div class="bc"><div class="bc-c" onclick="clm($('bm'));editCard('${c.id}')"><div class="bc-f">${esc(c.front)}</div><div class="bc-b">${esc(c.back)}</div><div class="bc-m">${dueTxt(c)}${c.interval?' · '+c.interval+'d':''}</div></div><span class="bc-s ${c.status}">${c.status==='suspended'?'off':c.status}</span><button class="bc-x" onclick="qDel('${c.id}','${id}')">✕</button></div>`).join('');
+  opm($('bm'));
 }
-function exitStudy(){document.getElementById('study-view').classList.add('view-hidden');document.getElementById('deck-list-view').classList.remove('view-hidden');currentDeckId=null;renderDecks()}
+function qDel(cid,did){confirm2('Delete this card?','Delete',async()=>{await fbDC(cid);toast('Deleted');setTimeout(()=>browseDk(did),150);if(curDk){buildQ();showCard()}})}
 
-// ── CARD CRUD ──
-function openModal(el){el.classList.add('active')}
-function closeModal(el){el.classList.remove('active')}
+// SETTINGS
+function openSet(){$('snpd').value=S.newPerDay||20;$('smr').value=S.maxReviews||50;$('sih').value=S.iH||1;$('sig').value=S.iG||1;$('sie').value=S.iE||4;opm($('sm'))}
+async function saveSet(){S.newPerDay=parseInt($('snpd').value)||20;S.maxReviews=parseInt($('smr').value)||50;S.iH=parseInt($('sih').value)||1;S.iG=parseInt($('sig').value)||1;S.iE=parseInt($('sie').value)||4;await fbSS();toast('Saved');clm($('sm'))}
 
-function openAddCard(){
-  editingCardId=null;document.getElementById('card-modal-title').textContent='Add Card';
-  document.getElementById('card-delete-btn').style.display='none';
-  document.getElementById('card-schedule-section').style.display='none';
-  document.getElementById('card-front').value='';document.getElementById('card-back').value='';
-  populateDeckSelect();openModal(document.getElementById('card-modal'));
-  setTimeout(()=>document.getElementById('card-front').focus(),150);
-}
-function openAddCardToDeck(){openAddCard();if(currentDeckId)document.getElementById('card-deck-select').value=currentDeckId}
-function openAddCardToDeckId(deckId){openAddCard();document.getElementById('card-deck-select').value=deckId}
-
-function openEditCard(cardId){
-  const card=db.cards.find(c=>c.id===cardId);if(!card)return;
-  editingCardId=cardId;
-  document.getElementById('card-modal-title').textContent='Edit Card';
-  document.getElementById('card-delete-btn').style.display='';
-  document.getElementById('card-schedule-section').style.display='';
-  document.getElementById('card-front').value=card.front;
-  document.getElementById('card-back').value=card.back;
-  document.getElementById('card-status-select').value=card.status||'new';
-  populateDeckSelect(card.deckId);openModal(document.getElementById('card-modal'));
-}
-
-function populateDeckSelect(selectedId){
-  document.getElementById('card-deck-select').innerHTML=db.decks.map(d=>
-    `<option value="${d.id}" ${d.id===(selectedId||currentDeckId||'')?'selected':''}>${esc(d.name)}</option>`).join('');
-}
-
-async function saveCard(){
-  const front=document.getElementById('card-front').value.trim(),back=document.getElementById('card-back').value.trim();
-  const deckId=document.getElementById('card-deck-select').value;
-  if(!front||!back){toast('Fill in both sides');return}
-  if(!deckId){toast('Select a deck');return}
-  if(editingCardId){
-    const card=db.cards.find(c=>c.id===editingCardId);
-    if(card){
-      card.front=front;card.back=back;card.deckId=deckId;
-      const newStatus=document.getElementById('card-status-select').value;
-      card.status=newStatus;
-      await fbSaveCard(card);toast('Card updated');
-    }
-  }else{await fbSaveCard(createCard(deckId,front,back));toast('Card added')}
-  closeModal(document.getElementById('card-modal'));
-  if(currentDeckId){buildQueue();showNextCard()}
-}
-
-function confirmDeleteCard(){
-  if(!editingCardId)return;
-  showConfirm('Delete this card?','Delete',async()=>{await fbDeleteCard(editingCardId);closeModal(document.getElementById('card-modal'));toast('Card deleted');if(currentDeckId){buildQueue();showNextCard()}});
-}
-
-// ── DECK CRUD ──
-function openAddDeck(){editingDeckId=null;document.getElementById('deck-modal-title').textContent='New Deck';document.getElementById('deck-save-btn').textContent='Create';document.getElementById('deck-name').value='';openModal(document.getElementById('deck-modal'));setTimeout(()=>document.getElementById('deck-name').focus(),150)}
-function openRenameDeck(deckId){const deck=db.decks.find(d=>d.id===deckId);if(!deck)return;editingDeckId=deckId;document.getElementById('deck-modal-title').textContent='Rename Deck';document.getElementById('deck-save-btn').textContent='Save';document.getElementById('deck-name').value=deck.name;openModal(document.getElementById('deck-modal'));setTimeout(()=>document.getElementById('deck-name').focus(),150)}
-async function saveDeck(){const name=document.getElementById('deck-name').value.trim();if(!name)return;if(editingDeckId){const deck=db.decks.find(d=>d.id===editingDeckId);if(deck){deck.name=name;await fbSaveDeck(deck);toast('Deck renamed')}}else{await fbSaveDeck({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name});toast('Deck created')}closeModal(document.getElementById('deck-modal'))}
-document.getElementById('deck-name').addEventListener('keydown',e=>{if(e.key==='Enter')saveDeck()});
-function confirmDeleteDeck(deckId){const deck=db.decks.find(d=>d.id===deckId);const n=db.cards.filter(c=>c.deckId===deckId).length;showConfirm(`Delete "${esc(deck?.name||'')}" and ${n} card${n!==1?'s':''}?`,'Delete',async()=>{await fbDeleteDeck(deckId);toast('Deck deleted')})}
-
-// ── BROWSE ──
-function openBrowse(){if(currentDeckId)openBrowseDeck(currentDeckId)}
-function openBrowseDeck(deckId){
-  const deck=db.decks.find(d=>d.id===deckId);if(!deck)return;
-  document.getElementById('browse-title').textContent=deck.name;
-  const cards=db.cards.filter(c=>c.deckId===deckId);
-  const list=document.getElementById('browse-list');
-  if(cards.length===0){list.innerHTML='<div style="color:var(--text-3);font-family:var(--mono);font-size:.72rem;padding:20px 0;text-align:center;">No cards yet</div>'}
-  else{list.innerHTML=cards.map(c=>`<div class="browse-card">
-    <div class="browse-card-content" onclick="closeModal(document.getElementById('browse-modal'));openEditCard('${c.id}')">
-      <div class="browse-front">${esc(c.front)}</div>
-      <div class="browse-back">${esc(c.back)}</div>
-      <div class="browse-meta">${formatDueDate(c)}${c.interval?' · interval: '+c.interval+'d':''}</div>
-    </div>
-    <span class="browse-status ${c.status}">${c.status==='suspended'?'off':c.status}</span>
-    <button class="browse-delete" onclick="quickDeleteCard('${c.id}','${deckId}')" title="Delete">✕</button>
-  </div>`).join('')}
-  openModal(document.getElementById('browse-modal'));
-}
-function quickDeleteCard(cardId,deckId){showConfirm('Delete this card?','Delete',async()=>{await fbDeleteCard(cardId);toast('Card deleted');setTimeout(()=>openBrowseDeck(deckId),200);if(currentDeckId){buildQueue();showNextCard()}})}
-
-// ── SETTINGS ──
-function openSettings(){
-  document.getElementById('s-new-per-day').value=settings.newPerDay||20;
-  document.getElementById('s-max-reviews').value=settings.maxReviews||50;
-  document.getElementById('s-interval-hard').value=settings.intervalHard||1;
-  document.getElementById('s-interval-good').value=settings.intervalGood||1;
-  document.getElementById('s-interval-easy').value=settings.intervalEasy||4;
-  openModal(document.getElementById('settings-modal'));
-}
-async function saveSettings(){
-  settings.newPerDay=parseInt(document.getElementById('s-new-per-day').value)||20;
-  settings.maxReviews=parseInt(document.getElementById('s-max-reviews').value)||50;
-  settings.intervalHard=parseInt(document.getElementById('s-interval-hard').value)||1;
-  settings.intervalGood=parseInt(document.getElementById('s-interval-good').value)||1;
-  settings.intervalEasy=parseInt(document.getElementById('s-interval-easy').value)||4;
-  await fbSaveSettings();toast('Settings saved');closeModal(document.getElementById('settings-modal'));
-}
-
-// ── CONFIRM & TOAST ──
-function showConfirm(msg,label,cb){document.getElementById('confirm-msg').textContent=msg;document.getElementById('confirm-yes').textContent=label;confirmCallback=cb;document.getElementById('confirm-overlay').classList.add('active')}
-function confirmYes(){document.getElementById('confirm-overlay').classList.remove('active');if(confirmCallback)confirmCallback();confirmCallback=null}
-function confirmCancel(){document.getElementById('confirm-overlay').classList.remove('active');confirmCallback=null}
-let toastTimer;
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2000)}
+// CONFIRM & TOAST
+function confirm2(msg,lbl,cb){$('cfm').textContent=msg;$('cfy').textContent=lbl;cfCb=cb;$('cfo').classList.add('on')}
+function cfYes(){$('cfo').classList.remove('on');if(cfCb)cfCb();cfCb=null}
+function cfNo(){$('cfo').classList.remove('on');cfCb=null}
+let tt;function toast(m){const e=$('tst');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1800)}
 </script>
 </body>
 </html>

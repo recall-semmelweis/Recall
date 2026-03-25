@@ -165,7 +165,7 @@ input,textarea,select{font-family:inherit}
         <div class="sync-dot" id="sync-dot" title="Sync status"></div>
         <button class="btn-icon" onclick="openAddCard()" title="Add card">+</button>
         <button class="btn-icon" onclick="openAddDeck()" title="New deck">◇</button>
-        <button class="btn-icon" onclick="openSettings()" title="Settings" style="font-size:.85rem;color:var(--text-3)">⚙</button>
+        <button class="btn-icon" onclick="openSettings()" title="Settings" style="font-size:.85rem">⚙</button>
         <button class="btn-icon" onclick="handleSignOut()" title="Sign out">⏻</button>
       </div>
     </div>
@@ -200,14 +200,12 @@ input,textarea,select{font-family:inherit}
     <label>Back</label>
     <textarea id="card-back" placeholder="Answer...&#10;- bullet point&#10;- another point"></textarea>
     <div id="card-schedule-section" style="display:none;">
-      <label>Due in (days)</label>
-      <input type="text" inputmode="numeric" pattern="[0-9]*" id="card-due-days" value="0" placeholder="0" style="margin-bottom:14px">
       <label>Status</label>
       <select id="card-status-select">
         <option value="new">New</option>
         <option value="learning">Learning</option>
         <option value="review">Review</option>
-        <option value="suspended">Suspended</option>
+        <option value="suspended">Suspended (out of rotation)</option>
       </select>
     </div>
     <div class="modal-actions">
@@ -246,6 +244,8 @@ input,textarea,select{font-family:inherit}
     <div class="settings-section">
       <h3>Study</h3>
       <div class="settings-row"><span>New cards per day</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-new-per-day" value="20" style="width:60px;text-align:center;margin:0;padding:8px"></div>
+      <div class="settings-row"><span>Max reviews per session</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="s-max-reviews" value="50" style="width:60px;text-align:center;margin:0;padding:8px"></div>
+      <div class="settings-hint">Caps how many cards you see per session. Remaining cards roll to next time. Set high (e.g. 999) for no limit.</div>
     </div>
     <div class="settings-section">
       <h3>Intervals (days)</h3>
@@ -291,7 +291,7 @@ firebase.initializeApp({
 const auth=firebase.auth(),firestore=firebase.firestore();
 firestore.enablePersistence({synchronizeTabs:true}).catch(()=>{});
 
-let db={decks:[],cards:[]},settings={newPerDay:20,intervalHard:1,intervalGood:1,intervalEasy:4};
+let db={decks:[],cards:[]},settings={newPerDay:20,maxReviews:50,intervalHard:1,intervalGood:1,intervalEasy:4};
 let currentUser=null,currentDeckId=null,studyQueue=[],currentCardIndex=0,answerRevealed=false;
 let editingCardId=null,editingDeckId=null,confirmCallback=null,unsubDecks=null,unsubCards=null,unsubSettings=null;
 let authMode='signin';
@@ -436,7 +436,11 @@ function buildQueue(){
   const learning=cards.filter(c=>c.status==='learning'&&c.due<=now);
   const due=cards.filter(c=>c.status==='review'&&c.due<=now);
   const newCards=cards.filter(c=>c.status==='new').slice(0,settings.newPerDay||20);
-  const pool=[...due,...newCards];shuffle(pool);studyQueue=[...learning,...pool];currentCardIndex=0;
+  const pool=[...due,...newCards];shuffle(pool);
+  let queue=[...learning,...pool];
+  const max=settings.maxReviews||50;
+  if(queue.length>max)queue=queue.slice(0,max);
+  studyQueue=queue;currentCardIndex=0;
 }
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
 
@@ -513,12 +517,9 @@ function openEditCard(cardId){
   document.getElementById('card-schedule-section').style.display='';
   document.getElementById('card-front').value=card.front;
   document.getElementById('card-back').value=card.back;
-  document.getElementById('card-due-days').value=daysUntilDue(card);
   document.getElementById('card-status-select').value=card.status||'new';
   populateDeckSelect(card.deckId);openModal(document.getElementById('card-modal'));
 }
-
-function setCardDueNow(){document.getElementById('card-due-days').value=0}
 
 function populateDeckSelect(selectedId){
   document.getElementById('card-deck-select').innerHTML=db.decks.map(d=>
@@ -535,9 +536,7 @@ async function saveCard(){
     if(card){
       card.front=front;card.back=back;card.deckId=deckId;
       const newStatus=document.getElementById('card-status-select').value;
-      const dueDays=parseInt(document.getElementById('card-due-days').value)||0;
       card.status=newStatus;
-      if(newStatus!=='new')card.due=Date.now()+dueDays*86400000;
       await fbSaveCard(card);toast('Card updated');
     }
   }else{await fbSaveCard(createCard(deckId,front,back));toast('Card added')}
@@ -581,6 +580,7 @@ function quickDeleteCard(cardId,deckId){showConfirm('Delete this card?','Delete'
 // ── SETTINGS ──
 function openSettings(){
   document.getElementById('s-new-per-day').value=settings.newPerDay||20;
+  document.getElementById('s-max-reviews').value=settings.maxReviews||50;
   document.getElementById('s-interval-hard').value=settings.intervalHard||1;
   document.getElementById('s-interval-good').value=settings.intervalGood||1;
   document.getElementById('s-interval-easy').value=settings.intervalEasy||4;
@@ -588,6 +588,7 @@ function openSettings(){
 }
 async function saveSettings(){
   settings.newPerDay=parseInt(document.getElementById('s-new-per-day').value)||20;
+  settings.maxReviews=parseInt(document.getElementById('s-max-reviews').value)||50;
   settings.intervalHard=parseInt(document.getElementById('s-interval-hard').value)||1;
   settings.intervalGood=parseInt(document.getElementById('s-interval-good').value)||1;
   settings.intervalEasy=parseInt(document.getElementById('s-interval-easy').value)||4;

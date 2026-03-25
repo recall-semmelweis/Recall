@@ -197,6 +197,7 @@ input,textarea,select{font-family:inherit}
     <div id="css" style="display:none">
       <label>Status</label>
       <select id="csst"><option value="new">New</option><option value="learning">Learning</option><option value="review">Review</option><option value="suspended">Suspended</option></select>
+      <button class="bt bt-s" onclick="resetCard()" style="margin-top:2px;flex:none;font-size:.62rem;color:var(--t3)">Reset progress</button>
     </div>
     <div class="ma">
       <button class="bt bt-s" onclick="clm(document.getElementById('cm'))">Cancel</button>
@@ -393,6 +394,7 @@ function editCard(id){const c=D.cards.find(x=>x.id===id);if(!c)return;editCid=id
 function popDkSel(sel){$('cds').innerHTML=D.decks.map(d=>`<option value="${d.id}" ${d.id===(sel||curDk||'')?'selected':''}>${esc(d.name)}</option>`).join('')}
 async function saveC(){const f=$('cf').value.trim(),b=$('cbk').value.trim(),dk=$('cds').value;if(!f||!b){toast('Fill in both sides');return}if(!dk){toast('Select a deck');return}if(editCid){const c=D.cards.find(x=>x.id===editCid);if(c){c.front=f;c.back=b;c.deckId=dk;c.status=$('csst').value;await fbSC(c);toast('Updated')}}else{await fbSC(mkCard(dk,f,b));toast('Added')}clm($('cm'));if(curDk){buildQ();showCard()}}
 function delCard(){if(!editCid)return;confirm2('Delete this card?','Delete',async()=>{await fbDC(editCid);clm($('cm'));toast('Deleted');if(curDk){buildQ();showCard()}})}
+function resetCard(){if(!editCid)return;confirm2('Reset this card to new? All review history will be cleared.','Reset',async()=>{const c=D.cards.find(x=>x.id===editCid);if(c){c.status='new';c.interval=0;c.repetition=0;c.easeFactor=2.5;c.due=Date.now();c.lapses=0;await fbSC(c);$('csst').value='new';toast('Reset')}})}
 
 // DECK CRUD
 function addDeck(){editDid=null;$('dmt').textContent='New Deck';$('dsb').textContent='Create';$('dn').value='';opm($('dm'));setTimeout(()=>$('dn').focus(),120)}
@@ -413,8 +415,8 @@ function browseDk(id){
 function qDel(cid,did){confirm2('Delete this card?','Delete',async()=>{await fbDC(cid);toast('Deleted');setTimeout(()=>browseDk(did),150);if(curDk){buildQ();showCard()}})}
 
 // SETTINGS
-function openSet(){$('snpd').value=S.newPerDay||20;$('smr').value=S.maxReviews||50;$('sih').value=S.iH||1;$('sig').value=S.iG||1;$('sie').value=S.iE||4;opm($('sm'))}
-async function saveSet(){S.newPerDay=parseInt($('snpd').value)||20;S.maxReviews=parseInt($('smr').value)||50;S.iH=parseInt($('sih').value)||1;S.iG=parseInt($('sig').value)||1;S.iE=parseInt($('sie').value)||4;await fbSS();toast('Saved');clm($('sm'))}
+function openSet(){$('smr').value=S.maxReviews||50;$('sih').value=S.iH||1;$('sig').value=S.iG||1;$('sie').value=S.iE||4;opm($('sm'))}
+async function saveSet(){S.maxReviews=parseInt($('smr').value)||50;S.iH=parseInt($('sih').value)||1;S.iG=parseInt($('sig').value)||1;S.iE=parseInt($('sie').value)||4;await fbSS();toast('Saved');clm($('sm'))}
 
 // CONFIRM & TOAST
 function confirm2(msg,lbl,cb){$('cfm').textContent=msg;$('cfy').textContent=lbl;cfCb=cb;$('cfo').classList.add('on')}
